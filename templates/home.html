@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}LinkSheet – Secure, Private Google Sheets{% endblock %}
+
+{% block content %}
+
+<section class="relative pt-20 pb-32 overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-50/50 rounded-full blur-3xl -z-10 opacity-60"></div>
+
+    <div class="max-w-4xl mx-auto px-6 text-center">
+        
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border shadow-sm text-xs font-medium text-muted mb-8 animate-fade-in">
+            <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+            Row-Level Security for Google Sheets
+        </div>
+
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-6 animate-slide-up" style="animation-delay: 0.1s;">
+            Private Data Collection. <br />
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Powered by Google Sheets.</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-muted max-w-2xl mx-auto mb-10 leading-relaxed animate-slide-up" style="animation-delay: 0.2s;">
+            Create sheets where users can submit, view, and update 
+            <strong class="text-foreground font-semibold">only their own data</strong> — 
+            without seeing anyone else’s. No code required.
+        </p>
+
+        <div class="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up" style="animation-delay: 0.3s;">
+            <a href="/google/login/"
+               class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary_hover text-white px-8 py-3.5 rounded-xl font-medium shadow-lg shadow-blue-900/10 transition-all hover:-translate-y-1">
+               <i class="ph-bold ph-rocket-launch"></i>
+               Get Started for Free
+            </a>
+            <a href="#features"
+               class="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-foreground border border-border px-8 py-3.5 rounded-xl font-medium transition-all hover:shadow-md">
+               <i class="ph-bold ph-info"></i>
+               How it works
+            </a>
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-dashed border-border flex justify-center items-center gap-6 text-muted text-sm animate-slide-up" style="animation-delay: 0.4s;">
+            <span class="flex items-center gap-2"><i class="ph-fill ph-check-circle text-green-500"></i> No credit card required</span>
+            <span class="flex items-center gap-2"><i class="ph-fill ph-check-circle text-green-500"></i> Works with free Gmail</span>
+        </div>
+    </div>
+</section>
+
+<section id="features" class="max-w-7xl mx-auto px-6 py-24">
+    <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold text-foreground">Why use LinkSheet?</h2>
+        <p class="text-muted mt-2">Stop creating separate sheets for every user.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+
+        <div class="group bg-surface border border-border rounded-2xl p-8 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i class="ph-duotone ph-shield-check text-3xl text-accent"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-foreground mb-3">Row-Level Privacy</h3>
+            <p class="text-muted leading-relaxed">
+                Automatically filter data based on the logged-in user. Users only see and edit the rows that belong to them.
+            </p>
+        </div>
+
+        <div class="group bg-surface border border-border rounded-2xl p-8 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i class="ph-duotone ph-google-logo text-3xl text-green-600"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-foreground mb-3">Google Native</h3>
+            <p class="text-muted leading-relaxed">
+                Your data stays in your Google Sheet. We just provide the secure window. Open, analyze, and export directly from Google.
+            </p>
+        </div>
+
+        <div class="group bg-surface border border-border rounded-2xl p-8 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-purple-50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i class="ph-duotone ph-share-network text-3xl text-purple-600"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-foreground mb-3">One Magic Link</h3>
+            <p class="text-muted leading-relaxed">
+                Share a single URL with your entire team or class. LinkSheet handles the permissions and routing automatically.
+            </p>
+        </div>
+
+    </div>
+</section>
+
+<section class="max-w-5xl mx-auto px-6 pb-24">
+    <div class="bg-primary rounded-3xl p-12 text-center text-white relative overflow-hidden shadow-2xl shadow-slate-900/20">
+        
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10">
+            <h2 class="text-3xl md:text-4xl font-bold mb-6">Start collecting data the right way</h2>
+            <p class="text-slate-300 mb-10 text-lg max-w-xl mx-auto">
+                No spreadsheet chaos. No privacy leaks. Just clean, secure data collection.
+            </p>
+
+            <a href="/google/login/"
+               class="inline-flex items-center gap-2 bg-white text-primary px-8 py-3.5 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-lg">
+               <i class="ph-bold ph-google-logo"></i>
+               Sign in with Google
+            </a>
+            <p class="mt-4 text-xs text-slate-400">Free for personal use.</p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

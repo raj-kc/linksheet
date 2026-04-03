@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}LinkSheet{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            background: "#f8fafc",     // Slightly off-white for depth
+            surface: "#ffffff",
+            foreground: "#0f172a",     // slate-900
+            muted: "#64748b",          // slate-500
+            border: "#e2e8f0",         // slate-200
+            primary: "#0f172a",        // black/slate-900
+            primary_hover: "#1e293b",
+            accent: "#2563eb",         // blue-600
+            danger: "#ef4444",
+            success: "#10b981",
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.4s ease-out forwards',
+            'slide-up': 'slideUp 0.5s ease-out forwards',
+          },
+          keyframes: {
+            fadeIn: {
+              "0%": { opacity: 0 },
+              "100%": { opacity: 1 },
+            },
+            slideUp: {
+              "0%": { opacity: 0, transform: "translateY(10px)" },
+              "100%": { opacity: 1, transform: "translateY(0)" },
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-background text-foreground min-h-screen flex flex-col font-sans antialiased">
+
+  <header class="bg-surface border-b border-border sticky top-0 z-50 bg-opacity-90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+      <a href="/" class="flex items-center gap-2 group">
+        <div class="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
+            <i class="ph-bold ph-google-logo"></i>
+        </div>
+        <span class="text-lg font-bold tracking-tight">LinkSheet</span>
+      </a>
+
+      {% if user.is_authenticated %}
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex flex-col items-end">
+            <span class="text-sm font-semibold text-foreground leading-none">
+                {{ user.get_full_name|default:user.username }}
+            </span>
+            {% comment %} <span class="text-xs text-muted mt-1">Free Plan</span> {% endcomment %}
+        </div>
+        
+        <div class="relative group">
+            <img
+              src="{{ google_profile_pic|default:'/static/user.png' }}"
+              class="w-9 h-9 rounded-full border border-border cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-primary transition-all"
+              alt="Profile"
+              referrerpolicy="no-referrer"
+            />
+            {# Logout must be POST to satisfy CSRF protection (@require_POST on logout_view). #}
+            {# The button is styled exactly like the old <a> tag — UI is unchanged. #}
+            <form method="POST" action="{% url 'logout' %}" class="absolute right-0 top-10">
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="w-32 bg-white border border-border shadow-lg rounded-md py-2 px-4 text-sm hover:bg-gray-50 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto text-left w-full"
+              >
+                Sign Out
+              </button>
+            </form>
+        </div>
+      </div>
+      {% else %}
+        <a href="/google/login/" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary_hover transition-colors shadow-sm">
+            <i class="ph-bold ph-sign-in"></i> Sign in
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-8 animate-fade-in">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-border bg-white mt-auto">
+    <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center text-sm text-muted">
+        <p>&copy; 2026 LinkSheet. All rights reserved.</p>
+        <div class="flex gap-4 mt-2 md:mt-0">
+            <a href="#" class="hover:text-foreground">Privacy</a>
+            <a href="#" class="hover:text-foreground">Terms</a>
+            <a href="#" class="hover:text-foreground">Support</a>
+        </div>
+    </div>
+  </footer>
+
+</body>
+</html>

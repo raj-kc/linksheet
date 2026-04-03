@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Activity · LinkSheet{% endblock %}
+
+{% block head %}
+<style>
+  body > header { display: none !important; }
+  body > footer { display: none !important; }
+  body > main.max-w-7xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  body { overflow: hidden; margin: 0; padding: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-sans text-sm">
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SIDEBAR (Exact match from Dashboard)
+  ══════════════════════════════════════════════════════════════════════ -->
+  <aside class="w-[260px] bg-[#2b3648] text-white flex flex-col shadow-xl z-20 shrink-0">
+      <div class="h-16 flex items-center px-6 mb-4 border-b border-white/10 shrink-0">
+          <div class="w-8 h-8 bg-black/40 text-white rounded-lg flex items-center justify-center mr-3 shadow-inner">
+              <i class="ph-bold ph-google-logo text-lg"></i>
+          </div>
+          <span class="text-lg font-bold tracking-tight">LinkSheet</span>
+      </div>
+      
+      <nav class="flex-1 px-4 space-y-1.5 overflow-y-auto pb-4">
+          <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors border border-transparent">
+              <i class="ph-fill ph-squares-four text-lg"></i> Dashboard
+          </a>
+          <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+              <i class="ph-fill ph-file-text text-lg"></i> My Sheets
+          </a>
+          <a href="{% url 'dashboard' %}?tab=joined" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+              <i class="ph-fill ph-users text-lg"></i> Shared With Me
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+              <i class="ph-bold ph-copy text-lg"></i> Templates
+          </a>
+          <a href="{% url 'activity' %}" class="flex items-center gap-3 px-3 py-2.5 bg-white/10 rounded-lg text-sm font-medium text-white shadow-sm transition-colors border border-white/5">
+              <i class="ph-bold ph-chart-line-up text-lg text-blue-400"></i> Activity
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+              <i class="ph-bold ph-chart-bar text-lg"></i> Analytics
+          </a>
+          
+          <div class="mt-8 mb-2 px-3 text-xs font-bold text-white/30 uppercase tracking-widest pt-4">Settings</div>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+              <i class="ph-bold ph-gear text-lg"></i> Settings
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+              <i class="ph-bold ph-question text-lg"></i> Help
+          </a>
+          <form method="POST" action="{% url 'logout' %}" class="mt-auto">
+              {% csrf_token %}
+              <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-red-500/20 hover:text-red-300 rounded-lg text-sm font-medium transition-colors">
+                  <i class="ph-bold ph-sign-out text-lg"></i> Logout
+              </button>
+          </form>
+      </nav>
+      
+      <div class="mt-auto border-t border-white/10 shrink-0 pb-2">
+          <div class="p-5">
+              <p class="text-[11px] text-white/40">&copy; 2026 LinkSheet. All rights reserved.</p>
+              <div class="flex gap-3 mt-2 text-[11px] text-white/40 font-medium">
+                  <a href="#" class="hover:text-white transition-colors">Privacy</a>
+                  <a href="#" class="hover:text-white transition-colors">Terms</a>
+                  <a href="#" class="hover:text-white transition-colors">Support</a>
+              </div>
+          </div>
+      </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f8fafc]">
+
+    <!-- Header (Exact Match from Dashboard) -->
+    <header class="h-16 bg-white shrink-0 flex items-center justify-between px-8 shadow-[0_1px_2px_rgba(0,0,0,0.05)] z-10 border-b border-gray-100">
+        <div class="flex items-center w-full max-w-3xl">
+            <div class="relative w-full max-w-lg">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="liveSearch" placeholder="Search activity..." value="{{ search }}" class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-[13px] focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none transition-all placeholder:text-gray-400">
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-5 shrink-0">
+            <div class="flex items-center gap-3 border-r border-gray-200 pr-5">
+                <span class="text-[13px] font-semibold text-gray-700">{{ user.first_name|default:user.username }} {{ user.last_name|default:"" }}</span>
+                {% with pic=user.google_credentials.profile_picture %}
+                <img src="{% if pic %}{{ pic }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=6366f1&color=fff&size=128{% endif %}" class="w-8 h-8 rounded-full border border-gray-200 bg-white object-cover">
+                {% endwith %}
+            </div>
+            <button class="text-gray-400 hover:text-gray-700 relative transition-colors">
+                <i class="ph-bold ph-bell text-xl"></i>
+                <span class="absolute top-0 right-0.5 w-2 h-2 bg-purple-500 border-2 border-white rounded-full"></span>
+            </button>
+            <div class="w-8 h-8 bg-[#8b5cf6] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm cursor-pointer">
+                {{ user.username|slice:":2"|upper }}
+            </div>
+        </div>
+    </header>
+
+    <!-- Scrollable body -->
+    <main class="flex-1 overflow-y-auto px-8 py-8">
+
+      <!-- Page title -->
+      <h1 class="text-2xl font-extrabold text-gray-900 mb-6 tracking-tight">Activity</h1>
+
+      <!-- Filter tabs + search -->
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+          {% for label, key in tab_options %}
+          <a href="?filter={{ key }}{% if search %}&q={{ search }}{% endif %}"
+             class="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all
+                    {% if action_filter == key %}bg-gray-900 text-white shadow-sm{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-800{% endif %}">
+            {{ label }}
+          </a>
+          {% endfor %}
+        </div>
+
+        <!-- Count badge -->
+        <span class="text-[13px] text-gray-500 font-medium">
+          Showing <span class="font-bold text-gray-800">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span>
+          of <span class="font-bold text-gray-800">{{ total }}</span> activities
+        </span>
+      </div>
+
+      <!-- Activity List -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {% for log in page_obj %}
+        <div class="flex items-center gap-4 px-6 py-4 border-b border-gray-50 hover:bg-gray-50/60 transition-colors group last:border-0">
+
+          <!-- Avatar -->
+          {% with pic=log.user.google_credentials.profile_picture %}
+          <img src="{% if pic %}{{ pic }}{% else %}https://ui-avatars.com/api/?name={{ log.user.username }}&background=6366f1&color=fff&size=80{% endif %}"
+               class="w-9 h-9 rounded-full border border-gray-200 object-cover shadow-sm shrink-0"
+               title="{{ log.user.email|default:log.user.username }}">
+          {% endwith %}
+
+          <!-- Description -->
+          <div class="flex-1 min-w-0">
+            <p class="text-[13.5px] text-gray-700">
+              <span class="font-bold text-gray-900">{{ log.user.first_name|default:log.user.username }}</span>
+
+              {% if log.action == "sheet_created" %}
+                <span class="text-gray-600"> created sheet </span>
+              {% elif log.action == "row_added" %}
+                <span class="text-gray-600"> added a new row to </span>
+              {% elif log.action == "row_updated" %}
+                <span class="text-gray-600"> updated a row in </span>
+              {% elif log.action == "row_deleted" %}
+                <span class="text-gray-600"> deleted a row from </span>
+              {% elif log.action == "member_joined" %}
+                <span class="text-gray-600"> joined </span>
+              {% elif log.action == "collaborator_added" %}
+                <span class="text-gray-600"> was added as collaborator to </span>
+              {% endif %}
+
+              {% if log.sheet %}
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md
+                           {% if log.action == 'sheet_created' %}bg-blue-50 text-blue-700 border border-blue-200
+                           {% elif log.action == 'row_added' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                           {% elif log.action == 'row_updated' %}bg-amber-50 text-amber-700 border border-amber-200
+                           {% elif log.action == 'row_deleted' %}bg-red-50 text-red-700 border border-red-200
+                           {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}
+                           text-[12px] font-bold">
+                {{ log.sheet.name|truncatechars:28 }}
+              </span>
+              {% endif %}
+
+              <span class="text-gray-400 font-medium ml-1">{{ log.created_at|timesince }} ago</span>
+            </p>
+          </div>
+
+          <!-- Right badge (sheet name pill) -->
+          {% if log.sheet %}
+          <div class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[12px] font-semibold text-gray-600 bg-white shadow-sm">
+              <i class="ph-bold
+                {% if log.action == 'sheet_created' %}ph-file-plus text-blue-500
+                {% elif log.action == 'row_added' %}ph-plus-circle text-emerald-500
+                {% elif log.action == 'row_updated' %}ph-pencil-simple text-amber-500
+                {% elif log.action == 'row_deleted' %}ph-trash text-red-500
+                {% else %}ph-users text-indigo-500{% endif %}
+                text-sm"></i>
+              {{ log.sheet.name|truncatechars:18 }}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+
+        {% empty %}
+        <div class="py-20 flex flex-col items-center justify-center text-center">
+          <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 mb-4">
+            <i class="ph-duotone ph-activity text-2xl text-gray-300"></i>
+          </div>
+          <h4 class="text-gray-800 font-bold mb-1">No activity found</h4>
+          <p class="text-[13px] text-gray-500">
+            {% if search %}Try a different search term.{% else %}Start by creating or joining a sheet.{% endif %}
+          </p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="flex items-center justify-center gap-1 mt-6">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&filter={{ action_filter }}{% if search %}&q={{ search }}{% endif %}"
+           class="px-4 py-2 text-[13px] font-semibold border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
+          ← Prev
+        </a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+          <span class="w-9 h-9 flex items-center justify-center text-[13px] font-bold bg-gray-900 text-white rounded-lg shadow-sm">{{ num }}</span>
+          {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+          <a href="?page={{ num }}&filter={{ action_filter }}{% if search %}&q={{ search }}{% endif %}"
+             class="w-9 h-9 flex items-center justify-center text-[13px] font-semibold border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
+            {{ num }}
+          </a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&filter={{ action_filter }}{% if search %}&q={{ search }}{% endif %}"
+           class="px-4 py-2 text-[13px] font-semibold border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
+          Next →
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Footer -->
+      <div class="mt-8 flex items-center justify-between text-[12px] text-gray-400">
+        <span>© 2026 LinkSheet. All rights reserved.</span>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-gray-600 transition-colors">Privacy</a>
+          <a href="#" class="hover:text-gray-600 transition-colors">Terms</a>
+          <a href="#" class="hover:text-gray-600 transition-colors">Support</a>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// Live search — debounced redirect with current filter preserved
+const searchInput = document.getElementById('liveSearch');
+let searchTimer;
+searchInput.addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    const q = this.value.trim();
+    const filter = new URLSearchParams(window.location.search).get('filter') || 'all';
+    const url = new URL(window.location.href);
+    url.searchParams.set('q', q);
+    url.searchParams.set('filter', filter);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+  }, 500);
+});
+</script>
+{% endblock %}
