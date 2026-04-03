@@ -17,8 +17,8 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    # Runs Celery in the background (&) and Gunicorn in the foreground
-    startCommand: "celery -A config worker -l info & gunicorn config.wsgi:application"
+    # Runs Celery in the background, and Gunicorn fully exposed on port 10000
+    startCommand: "celery -A config worker -l info & gunicorn config.wsgi:application --bind 0.0.0.0:10000"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -31,7 +31,7 @@ services:
           property: connectionString
       - key: CELERY_RESULT_BACKEND
         value: django-db
-      # You will populate these values manually in the Render dashboard
+      # Same secrets as the web app
       - key: DJANGO_SECRET_KEY
         sync: false
       - key: FIELD_ENCRYPTION_KEY
@@ -40,5 +40,9 @@ services:
         sync: false
       - key: DJANGO_DEBUG
         value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "linksheet-web.onrender.com"
+      - key: PORT
+        value: "10000"
 
 
