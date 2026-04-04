@@ -224,7 +224,9 @@ LOGGING = {
 # ─────────────────────────────────────────────────────────────────────────────
 # 11. Google API Settings
 # ─────────────────────────────────────────────────────────────────────────────
-GOOGLE_CLIENT_SECRET_FILE = BASE_DIR / "linksheet.json"
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_CLIENT_SECRET_FILE = BASE_DIR / "linksheet.json"  # Local fallback
 GOOGLE_SCOPES = [
     "openid",
     "https://www.googleapis.com/auth/spreadsheets",

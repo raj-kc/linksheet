@@ -44,5 +44,10 @@ services:
         value: "linksheet-web.onrender.com"
       - key: PORT
         value: "10000"
+      # These replace the need for the linksheet.json file
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
 
 
