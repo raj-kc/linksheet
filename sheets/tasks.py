@@ -52,7 +52,8 @@ def process_sheet_events(self, sheet_id):
     """
     # Retry only on transient HTTP errors (rate-limit / server error).
     # Permanent errors (bad creds, sheet deleted) bubble up and are NOT retried.
-    if isinstance(self.request.exc, HttpError) and not _is_retriable(self.request.exc):
+    exc = getattr(self.request, "exc", None)
+    if isinstance(exc, HttpError) and not _is_retriable(exc):
         raise  # stop retrying
 
     try:
