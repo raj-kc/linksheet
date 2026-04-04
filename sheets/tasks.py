@@ -170,6 +170,14 @@ def _handle_create(service, sheet, event):
     event.row.save(update_fields=["sheet_row_number"])
 
 
+def _index_to_col(index: int) -> str:
+    result = []
+    while index >= 0:
+        result.append(chr(65 + (index % 26)))
+        index = (index // 26) - 1
+    return "".join(reversed(result))
+
+
 def _handle_update(service, sheet, event):
     """Overwrite an existing row in Google Sheets by its row number."""
     row = event.row
@@ -178,11 +186,21 @@ def _handle_update(service, sheet, event):
         raise ValueError("Row has no Google Sheet row number — cannot update.")
 
     values = [[event.payload.get(col, "") for col in sheet.columns]]
-    end_col = chr(64 + len(sheet.columns)) if sheet.columns else "A"
+    num_cols = max(1, len(sheet.columns))
+    end_col = _index_to_col(num_cols - 1)
+
+    meta = service.spreadsheets().get(
+        spreadsheetId=sheet.google_sheet_id,
+        fields="sheets.properties(title,index)"
+    ).execute()
+    sheets_sorted = sorted(meta["sheets"], key=lambda s: s["properties"]["index"])
+    sheet_title = sheets_sorted[0]["properties"]["title"]
+
+    range_str = f"'{sheet_title}'!A{row.sheet_row_number}:{end_col}{row.sheet_row_number}"
 
     service.spreadsheets().values().update(
         spreadsheetId=sheet.google_sheet_id,
-        range=f"A{row.sheet_row_number}:{end_col}{row.sheet_row_number}",
+        range=range_str,
         valueInputOption="RAW",
         body={"values": values}
     ).execute()
