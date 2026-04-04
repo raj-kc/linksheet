@@ -4,26 +4,31 @@
 
 {% block head %}
 <style>
-  /* Hide standard base.html header and footer */
-  body > header { display: none !important; }
-  body > footer { display: none !important; }
-  
-  /* Reset the main container to take up the full screen */
-  body > main.max-w-7xl {
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  body {
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
-  }
+    /* Hide standard base.html header and footer */
+    body>header {
+        display: none !important;
+    }
+
+    body>footer {
+        display: none !important;
+    }
+
+    /* Reset the main container to take up the full screen */
+    body>main.max-w-7xl {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    body {
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
 </style>
 {% endblock %}
 
@@ -37,42 +42,51 @@
             </div>
             <span class="text-lg font-bold tracking-tight">LinkSheet</span>
         </div>
-        
+
         <nav class="flex-1 px-4 space-y-1.5 overflow-y-auto pb-4">
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-white/10 rounded-lg text-sm font-medium text-white shadow-sm transition-colors border border-white/5">
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-2.5 bg-white/10 rounded-lg text-sm font-medium text-white shadow-sm transition-colors border border-white/5">
                 <i class="ph-fill ph-squares-four text-lg text-blue-400"></i> Dashboard
             </a>
-            <a href="#" onclick="switchTab('created')" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+            <a href="#" onclick="switchTab('created')"
+                class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
                 <i class="ph-fill ph-file-text text-lg"></i> My Sheets
             </a>
-            <a href="#" onclick="switchTab('joined')" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+            <a href="#" onclick="switchTab('joined')"
+                class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
                 <i class="ph-fill ph-users text-lg"></i> Shared With Me
             </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
                 <i class="ph-bold ph-copy text-lg"></i> Templates
             </a>
-            <a href="/activity/" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+            <a href="/activity/"
+                class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
                 <i class="ph-bold ph-chart-line-up text-lg"></i> Activity
             </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
                 <i class="ph-bold ph-chart-bar text-lg"></i> Analytics
             </a>
-            
+
             <div class="mt-8 mb-2 px-3 text-xs font-bold text-white/30 uppercase tracking-widest pt-4">Settings</div>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
                 <i class="ph-bold ph-gear text-lg"></i> Settings
             </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">
                 <i class="ph-bold ph-question text-lg"></i> Help
             </a>
             <form method="POST" action="{% url 'logout' %}" class="mt-auto">
                 {% csrf_token %}
-                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-red-500/20 hover:text-red-300 rounded-lg text-sm font-medium transition-colors">
+                <button type="submit"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-red-500/20 hover:text-red-300 rounded-lg text-sm font-medium transition-colors">
                     <i class="ph-bold ph-sign-out text-lg"></i> Logout
                 </button>
             </form>
         </nav>
-        
+
         <div class="mt-auto border-t border-white/10 shrink-0 pb-2">
             <div class="p-5">
                 <p class="text-[11px] text-white/40">&copy; 2026 LinkSheet. All rights reserved.</p>
@@ -87,26 +101,33 @@
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f8fafc]">
-        
+
         <!-- Top HTML Search/Profile Header -->
-        <header class="h-16 bg-white shrink-0 flex items-center justify-between px-8 shadow-[0_1px_2px_rgba(0,0,0,0.05)] z-10 border-b border-gray-100">
+        <header
+            class="h-16 bg-white shrink-0 flex items-center justify-between px-8 shadow-[0_1px_2px_rgba(0,0,0,0.05)] z-10 border-b border-gray-100">
             <div class="flex items-center w-full max-w-3xl">
                 <div class="relative w-full max-w-lg">
-                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                    <input type="text" placeholder="Search sheets..." class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-[13px] focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none transition-all placeholder:text-gray-400">
+                    <i
+                        class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" placeholder="Search sheets..."
+                        class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-[13px] focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 outline-none transition-all placeholder:text-gray-400">
                 </div>
             </div>
-            
+
             <div class="flex items-center gap-5 shrink-0">
                 <div class="flex items-center gap-3 border-r border-gray-200 pr-5">
-                    <span class="text-[13px] font-semibold text-gray-700">{{ user.first_name|default:user.username }} {{ user.last_name|default:"" }}</span>
-                    <img src="{% if google_profile_pic %}{{ google_profile_pic }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=6366f1&color=fff&size=128{% endif %}" class="w-8 h-8 rounded-full border border-gray-200 bg-white">
+                    <span class="text-[13px] font-semibold text-gray-700">{{ user.first_name|default:user.username }} {{
+                        user.last_name|default:"" }}</span>
+                    <img src="{% if google_profile_pic %}{{ google_profile_pic }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=6366f1&color=fff&size=128{% endif %}"
+                        class="w-8 h-8 rounded-full border border-gray-200 bg-white">
                 </div>
                 <button class="text-gray-400 hover:text-gray-700 relative transition-colors">
                     <i class="ph-bold ph-bell text-xl"></i>
-                    <span class="absolute top-0 right-0.5 w-2 h-2 bg-purple-500 border-2 border-white rounded-full"></span>
+                    <span
+                        class="absolute top-0 right-0.5 w-2 h-2 bg-purple-500 border-2 border-white rounded-full"></span>
                 </button>
-                <div class="w-8 h-8 bg-[#8b5cf6] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm cursor-pointer">
+                <div
+                    class="w-8 h-8 bg-[#8b5cf6] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm cursor-pointer">
                     {{ user.username|slice:":2"|upper }}
                 </div>
             </div>
@@ -114,7 +135,7 @@
 
         <!-- Scrollable content area -->
         <main class="flex-1 overflow-y-auto p-8 relative">
-            
+
             <!-- Dashboard Title / Actions -->
             <div class="flex items-end justify-between mb-8">
                 <div>
@@ -122,15 +143,18 @@
                         Welcome, {{ user.first_name|default:user.username }} <span class="text-2xl">👋</span>
                     </h1>
                 </div>
-                
+
                 <div class="flex items-center gap-3">
-                    <button onclick="openModal('createSheetModal')" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-sm font-semibold text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm transition-all hover:border-gray-300">
+                    <button onclick="openModal('createSheetModal')"
+                        class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-sm font-semibold text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm transition-all hover:border-gray-300">
                         <i class="ph-bold ph-plus text-green-600 text-base"></i> Create Sheet
                     </button>
-                    <button onclick="openModal('joinSheetModal')" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-sm font-semibold text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm transition-all hover:border-gray-300">
+                    <button onclick="openModal('joinSheetModal')"
+                        class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-sm font-semibold text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm transition-all hover:border-gray-300">
                         <i class="ph-bold ph-link text-gray-400 text-base"></i> Join Sheet
                     </button>
-                    <button onclick="openModal('createSheetModal')" class="flex items-center justify-center gap-2 px-4 py-2 bg-[#1b5e20] border border-[#1b5e20] text-white text-sm font-semibold rounded-lg hover:bg-[#2e7d32] shadow-sm shadow-green-900/10 transition-all cursor-pointer">
+                    <button onclick="openModal('createSheetModal')"
+                        class="flex items-center justify-center gap-2 px-4 py-2 bg-[#1b5e20] border border-[#1b5e20] text-white text-sm font-semibold rounded-lg hover:bg-[#2e7d32] shadow-sm shadow-green-900/10 transition-all cursor-pointer">
                         <i class="ph-bold ph-file-xls text-base text-green-100"></i> Import Google Sheet
                     </button>
                 </div>
@@ -139,76 +163,98 @@
             <!-- 4 KPI Cards -->
             <div class="grid grid-cols-4 gap-6 mb-8">
                 <!-- Total Sheets -->
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 text-blue-50 opacity-50 group-hover:opacity-100 transition-opacity">
+                <div
+                    class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
+                    <div
+                        class="absolute -right-4 -top-4 text-blue-50 opacity-50 group-hover:opacity-100 transition-opacity">
                         <i class="ph-fill ph-file text-[100px]"></i>
                     </div>
-                    <div class="w-10 h-10 bg-[#eff6ff] text-blue-600 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-blue-100">
+                    <div
+                        class="w-10 h-10 bg-[#eff6ff] text-blue-600 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-blue-100">
                         <i class="ph-fill ph-file-text text-xl"></i>
                     </div>
                     <p class="text-[13px] text-gray-500 font-medium relative z-10 mt-auto">Total Sheets</p>
                     <h3 class="text-3xl font-bold text-gray-900 mt-1 relative z-10">{{ total_sheets|default:"0" }}</h3>
                     <p class="text-[11px] text-gray-400 font-medium mt-1 relative z-10">Sheets Created</p>
                 </div>
-                
+
                 <!-- Total Responses -->
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 text-purple-50 opacity-50 group-hover:opacity-100 transition-opacity">
+                <div
+                    class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
+                    <div
+                        class="absolute -right-4 -top-4 text-purple-50 opacity-50 group-hover:opacity-100 transition-opacity">
                         <i class="ph-fill ph-paper-plane text-[100px]"></i>
                     </div>
-                    <div class="w-10 h-10 bg-[#faf5ff] text-purple-600 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-purple-100">
+                    <div
+                        class="w-10 h-10 bg-[#faf5ff] text-purple-600 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-purple-100">
                         <i class="ph-fill ph-paper-plane-right text-xl"></i>
                     </div>
                     <p class="text-[13px] text-gray-500 font-medium relative z-10 mt-auto">Total Responses</p>
                     <h3 class="text-3xl font-bold text-gray-900 mt-1 relative z-10">{{ total_rows|default:"0" }}</h3>
                     <p class="text-[11px] text-gray-400 font-medium mt-1 relative z-10">Form Submissions</p>
                 </div>
-                
+
                 <!-- Collaborators -->
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 text-emerald-50 opacity-50 group-hover:opacity-100 transition-opacity">
+                <div
+                    class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
+                    <div
+                        class="absolute -right-4 -top-4 text-emerald-50 opacity-50 group-hover:opacity-100 transition-opacity">
                         <i class="ph-fill ph-users text-[100px]"></i>
                     </div>
-                    <div class="w-10 h-10 bg-[#ecfdf5] text-emerald-600 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-emerald-100">
+                    <div
+                        class="w-10 h-10 bg-[#ecfdf5] text-emerald-600 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-emerald-100">
                         <i class="ph-fill ph-users-three text-xl"></i>
                     </div>
                     <p class="text-[13px] text-gray-500 font-medium relative z-10 mt-auto">Collaborators</p>
-                    <h3 class="text-3xl font-bold text-gray-900 mt-1 relative z-10">{{ joined_sheets|length|default:"0" }}</h3>
+                    <h3 class="text-3xl font-bold text-gray-900 mt-1 relative z-10">{{ joined_sheets|length|default:"0"
+                        }}</h3>
                     <p class="text-[11px] text-gray-400 font-medium mt-1 relative z-10">Active Members</p>
                 </div>
-                
+
                 <!-- Last Activity -->
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
-                    <div class="absolute -right-4 -top-4 text-orange-50 opacity-50 group-hover:opacity-100 transition-opacity">
+                <div
+                    class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden group">
+                    <div
+                        class="absolute -right-4 -top-4 text-orange-50 opacity-50 group-hover:opacity-100 transition-opacity">
                         <i class="ph-fill ph-sun text-[100px]"></i>
                     </div>
-                    <div class="w-10 h-10 bg-[#fff7ed] text-orange-500 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-orange-100">
+                    <div
+                        class="w-10 h-10 bg-[#fff7ed] text-orange-500 rounded-xl flex items-center justify-center mb-6 relative z-10 border border-orange-100">
                         <i class="ph-fill ph-lightning text-xl"></i>
                     </div>
                     <p class="text-[13px] text-gray-500 font-medium relative z-10 mt-auto">Last Activity</p>
-                    <h3 class="text-[26px] font-bold text-gray-900 mt-1 leading-tight tracking-tight relative z-10">{% if last_activity %}{{ last_activity|timesince }} ago{% else %}Never{% endif %}</h3>
+                    <h3 class="text-[26px] font-bold text-gray-900 mt-1 leading-tight tracking-tight relative z-10">{%
+                        if last_activity %}{{ last_activity|timesince }} ago{% else %}Never{% endif %}</h3>
                     <p class="text-[11px] text-gray-400 font-medium mt-1 relative z-10">Recent Updates</p>
                 </div>
             </div>
 
             <!-- Table & Activity Area -->
             <div class="flex gap-6 items-start pb-8">
-                
+
                 <!-- Main Table Section -->
-                <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden min-h-[500px]">
-                    
+                <div
+                    class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden min-h-[500px]">
+
                     <!-- Tabs Headers -->
                     <div class="px-6 flex items-end justify-between border-b border-gray-100 pt-3 bg-white">
                         <div class="flex gap-6 font-semibold text-[14px]">
-                            <button onclick="switchTab('created')" id="btn-created" class="text-gray-900 border-b-2 border-gray-900 pb-3 mt-1 hover:text-gray-900 outline-none transition-colors">My Sheets</button>
-                            <button class="text-gray-400 border-b-2 border-transparent pb-3 mt-1 hover:text-gray-600 outline-none transition-colors hidden font-normal">Created Sheets</button>
-                            <button onclick="switchTab('joined')" id="btn-joined" class="text-gray-400 border-b-2 border-transparent pb-3 mt-1 hover:text-gray-600 outline-none transition-colors font-normal">Joined Sheets</button>
+                            <button onclick="switchTab('created')" id="btn-created"
+                                class="text-gray-900 border-b-2 border-gray-900 pb-3 mt-1 hover:text-gray-900 outline-none transition-colors">My
+                                Sheets</button>
+                            <button
+                                class="text-gray-400 border-b-2 border-transparent pb-3 mt-1 hover:text-gray-600 outline-none transition-colors hidden font-normal">Created
+                                Sheets</button>
+                            <button onclick="switchTab('joined')" id="btn-joined"
+                                class="text-gray-400 border-b-2 border-transparent pb-3 mt-1 hover:text-gray-600 outline-none transition-colors font-normal">Joined
+                                Sheets</button>
                             <button class="text-gray-400 hover:text-gray-600 ml-auto p-1.5 pb-3">
                                 <i class="ph-bold ph-dots-three text-xl"></i>
                             </button>
                         </div>
                         <div class="pb-2.5 flex items-center gap-3">
-                            <span class="text-xs font-semibold text-gray-600 flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded bg-white border border-gray-200 shadow-sm">
+                            <span
+                                class="text-xs font-semibold text-gray-600 flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded bg-white border border-gray-200 shadow-sm">
                                 All Sheets <i class="ph-bold ph-caret-down opacity-50 text-[10px]"></i>
                             </span>
                         </div>
@@ -217,34 +263,39 @@
                     <!-- Search / Filter Row -->
                     <div class="px-6 py-3 flex items-center justify-between border-b border-gray-100 bg-gray-50/50">
                         <div class="relative w-[340px]">
-                            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" placeholder="Search sheets..." class="w-full pl-9 pr-4 py-1.5 bg-white border border-gray-300 rounded-full text-xs outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 shadow-sm placeholder:text-gray-400 text-gray-700">
+                            <i
+                                class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Search sheets..."
+                                class="w-full pl-9 pr-4 py-1.5 bg-white border border-gray-300 rounded-full text-xs outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 shadow-sm placeholder:text-gray-400 text-gray-700">
                         </div>
                         <div class="flex gap-2">
-                             <button class="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-md flex items-center gap-1.5 text-gray-600 hover:bg-gray-50 transition-colors bg-white shadow-sm">
-                                 All Sheets <i class="ph-bold ph-caret-down opacity-50 text-[10px]"></i>
-                             </button>
-                             <button class="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-md flex items-center gap-1.5 text-gray-600 hover:bg-gray-50 transition-colors bg-white shadow-sm">
-                                 Newest <i class="ph-bold ph-caret-down opacity-50 text-[10px]"></i>
-                             </button>
+                            <button
+                                class="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-md flex items-center gap-1.5 text-gray-600 hover:bg-gray-50 transition-colors bg-white shadow-sm">
+                                All Sheets <i class="ph-bold ph-caret-down opacity-50 text-[10px]"></i>
+                            </button>
+                            <button
+                                class="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-md flex items-center gap-1.5 text-gray-600 hover:bg-gray-50 transition-colors bg-white shadow-sm">
+                                Newest <i class="ph-bold ph-caret-down opacity-50 text-[10px]"></i>
+                            </button>
                         </div>
                     </div>
 
                     <!-- The Tables -->
                     <div class="flex-1 overflow-auto bg-white">
-                        
+
                         <!-- CREATED SHEETS TABLE -->
                         <div id="tab-created" class="tab-content transition-opacity duration-300 opacity-100 block">
                             <table class="w-full text-left border-collapse">
-                                <thead class="text-xs text-gray-400 font-semibold uppercase tracking-wider border-b border-gray-100 bg-white sticky top-0 z-10">
+                                <thead
+                                    class="text-xs text-gray-400 font-semibold uppercase tracking-wider border-b border-gray-100 bg-white sticky top-0 z-10">
                                     <tr>
                                         <th class="px-6 py-4 whitespace-nowrap">Sheet Name</th>
-                                        
+
                                         <th class="px-6 py-4 whitespace-nowrap">Created</th>
                                         <th class="px-6 py-4 whitespace-nowrap text-center">Responses</th>
                                         <th class="px-6 py-4 whitespace-nowrap">Collaborators</th>
                                         <th class="px-6 py-4 whitespace-nowrap text-center">Status</th>
-                                        <th class="px-6 py-4 text-right"></th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 text-[13px]">
@@ -253,110 +304,184 @@
                                     <tr class="hover:bg-gray-50/70 transition-colors group">
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-3.5">
-                                                <div class="w-9 h-9 rounded-lg bg-[#eff6ff] text-blue-600 flex items-center justify-center border border-blue-100 text-lg"><i class="ph-fill ph-file-text"></i></div>
+                                                <div
+                                                    class="w-9 h-9 rounded-lg bg-[#eff6ff] text-blue-600 flex items-center justify-center border border-blue-100 text-lg">
+                                                    <i class="ph-fill ph-file-text"></i>
+                                                </div>
                                                 <div>
                                                     <p class="font-bold text-gray-900">{{ sheet.name }}</p>
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 mt-0.5">
+                                                    <span
+                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 mt-0.5">
                                                         <i class="ph-fill ph-crown text-[9px]"></i> Owner
                                                     </span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ sheet.created_at|date:"M d, Y" }}</td>
-                                        <td class="px-6 py-4 text-center font-bold text-gray-700">{{ sheet.response_count }}</td>
+                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ sheet.created_at|date:"M d,
+                                            Y" }}</td>
+                                        <td class="px-6 py-4 text-center font-bold text-gray-700">{{
+                                            sheet.response_count }}</td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center">
                                                 {% with collabs=sheet.active_members|dictsortreversed:"role" %}
                                                 {% if collabs %}
-                                                    <div class="flex -space-x-1.5">
-                                                        {% for member in collabs|slice:":3" %}
-                                                            {% if member.role == "collaborator" %}
-                                                            <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-blue-200 flex items-center justify-center overflow-hidden" title="{{ member.user.username }} (Collaborator)">
-                                                                <span class="text-[10px] font-bold text-blue-700">{{ member.user.username|slice:":2"|upper }}</span>
-                                                            </div>
-                                                            {% endif %}
-                                                        {% endfor %}
+                                                <div class="flex -space-x-1.5">
+                                                    {% for member in collabs|slice:":3" %}
+                                                    {% if member.role == "collaborator" %}
+                                                    <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-blue-200 flex items-center justify-center overflow-hidden"
+                                                        title="{{ member.user.username }} (Collaborator)">
+                                                        <span class="text-[10px] font-bold text-blue-700">{{
+                                                            member.user.username|slice:":2"|upper }}</span>
                                                     </div>
-                                                    {% with collab_count=sheet.active_members|length %}
-                                                    {% if collab_count > 3 %}<span class="text-xs font-semibold text-gray-500 ml-2">+{{ collab_count|add:"-3" }}</span>{% endif %}
-                                                    {% endwith %}
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                {% with collab_count=sheet.active_members|length %}
+                                                {% if collab_count > 3 %}<span
+                                                    class="text-xs font-semibold text-gray-500 ml-2">+{{
+                                                    collab_count|add:"-3" }}</span>{% endif %}
+                                                {% endwith %}
                                                 {% else %}
-                                                    <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-500 border border-gray-200">Only you</span>
+                                                <span
+                                                    class="px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-500 border border-gray-200">Only
+                                                    you</span>
                                                 {% endif %}
                                                 {% endwith %}
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-center">
-                                            <span class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-emerald-700 w-[72px]">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.8)]"></span> Live
+                                            <span
+                                                class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-emerald-700 w-[72px]">
+                                                <span
+                                                    class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.8)]"></span>
+                                                Live
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 text-right">
-                                            <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <a href="{{ sheet.google_url }}" target="_blank" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="View in Google Sheets"><i class="ph-bold ph-google-logo text-lg"></i></a>
-                                                <button onclick="copySheetLink(this)" data-share-link="{{ request.scheme }}://{{ request.get_host }}{% url 'join_sheet' sheet.share_token %}" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Copy Joinee Link"><i class="ph-bold ph-link text-lg"></i></button>
-                                                <button onclick="openRemoveCollaboratorModal('{{ sheet.id }}', this)" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Manage Collaborators" data-collabs='[ {% for m in sheet.active_members %}{% if m.role == "collaborator" %}{"email": "{{ m.user.email|escapejs }}", "username": "{{ m.user.username|escapejs }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %} ]'>
+                                            <div class="flex items-center justify-end gap-1 ">
+                                                <a href="{{ sheet.google_url }}" target="_blank"
+                                                    class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                                                    title="View in Google Sheets"><i
+                                                        class="ph-bold ph-google-logo text-lg"></i></a>
+                                                <button onclick="copySheetLink(this)"
+                                                    data-share-link="{{ request.scheme }}://{{ request.get_host }}{% url 'join_sheet' sheet.share_token %}"
+                                                    class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                                                    title="Copy Joinee Link"><i
+                                                        class="ph-bold ph-link text-lg"></i></button>
+                                                <button onclick="openRemoveCollaboratorModal('{{ sheet.id }}', this)"
+                                                    class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                                                    title="Manage Collaborators"
+                                                    data-collabs='[ {% for m in sheet.active_members %}{% if m.role == "collaborator" %}{"email": "{{ m.user.email|escapejs }}", "username": "{{ m.user.username|escapejs }}"}{% if not forloop.last %},{% endif %}{% endif %}{% endfor %} ]'>
                                                     <i class="ph-bold ph-users text-lg"></i>
                                                 </button>
                                                 <div class="relative">
-                                                    <button onclick="toggleDownloadMenu(event, '{{ sheet.id }}')" id="download-btn-{{ sheet.id }}" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Download">
-                                                        <i class="ph-bold ph-download-simple text-lg" id="download-icon-{{ sheet.id }}"></i>
-                                                        <i class="ph-bold ph-spinner animate-spin text-lg hidden" id="download-spinner-{{ sheet.id }}"></i>
+                                                    <button onclick="toggleDownloadMenu(event, '{{ sheet.id }}')"
+                                                        id="download-btn-{{ sheet.id }}"
+                                                        class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                                                        title="Download">
+                                                        <i class="ph-bold ph-download-simple text-lg"
+                                                            id="download-icon-{{ sheet.id }}"></i>
+                                                        <i class="ph-bold ph-spinner animate-spin text-lg hidden"
+                                                            id="download-spinner-{{ sheet.id }}"></i>
                                                     </button>
-                                                    <div id="download-menu-{{ sheet.id }}" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 z-50 text-left overflow-hidden">
-                                                        <a href="#" onclick="handleDownload(event, '{{ sheet.id }}', 'xlsx')" class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700 border-b border-gray-50"><i class="ph-bold ph-file-xls mr-2 text-green-600 text-base"></i>Excel (.xlsx)</a>
-                                                        <a href="#" onclick="handleDownload(event, '{{ sheet.id }}', 'csv')" class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700"><i class="ph-bold ph-file-csv mr-2 text-blue-600 text-base"></i>CSV (.csv)</a>
+                                                    <div id="download-menu-{{ sheet.id }}"
+                                                        class="hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 z-50 text-left overflow-hidden">
+                                                        <a href="#"
+                                                            onclick="handleDownload(event, '{{ sheet.id }}', 'xlsx')"
+                                                            class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700 border-b border-gray-50"><i
+                                                                class="ph-bold ph-file-xls mr-2 text-green-600 text-base"></i>Excel
+                                                            (.xlsx)</a>
+                                                        <a href="#"
+                                                            onclick="handleDownload(event, '{{ sheet.id }}', 'csv')"
+                                                            class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700"><i
+                                                                class="ph-bold ph-file-csv mr-2 text-blue-600 text-base"></i>CSV
+                                                            (.csv)</a>
                                                     </div>
                                                 </div>
-                                                <button onclick="confirmDeleteSheet('{{ sheet.id }}', '{{ sheet.name|escapejs }}')" class="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Delete"><i class="ph-bold ph-trash text-lg"></i></button>
+                                                <button
+                                                    onclick="confirmDeleteSheet('{{ sheet.id }}', '{{ sheet.name|escapejs }}')"
+                                                    class="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                                                    title="Delete"><i class="ph-bold ph-trash text-lg"></i></button>
                                             </div>
                                         </td>
                                     </tr>
                                     {% endfor %}
 
-                                    {% comment %}Phase 5: Collaborated sheets appear in Created tab with badge{% endcomment %}
+                                    {% comment %}Phase 5: Collaborated sheets appear in Created tab with badge{%
+                                    endcomment %}
                                     {% for member in collaborating_sheets %}
                                     <tr class="hover:bg-gray-50/70 transition-colors group">
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-3.5">
-                                                <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100 text-lg"><i class="ph-fill ph-file-text"></i></div>
+                                                <div
+                                                    class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100 text-lg">
+                                                    <i class="ph-fill ph-file-text"></i>
+                                                </div>
                                                 <div>
                                                     <p class="font-bold text-gray-900">{{ member.sheet.name }}</p>
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 mt-0.5">
+                                                    <span
+                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 mt-0.5">
                                                         <i class="ph-fill ph-handshake text-[9px]"></i> Collaborated
                                                     </span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ member.sheet.created_at|date:"M d, Y" }}</td>
+                                        <td class="px-6 py-4 text-gray-600 font-medium">{{
+                                            member.sheet.created_at|date:"M d, Y" }}</td>
                                         <td class="px-6 py-4 text-center font-bold text-gray-700">
                                             <span class="text-gray-400 text-xs">—</span>
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold border border-gray-200">{{ member.sheet.owner.username|slice:":1"|upper }}</div>
-                                                <span class="text-[12px] text-gray-700 font-semibold">{{ member.sheet.owner.username }}</span>
+                                                <div
+                                                    class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold border border-gray-200">
+                                                    {{ member.sheet.owner.username|slice:":1"|upper }}</div>
+                                                <span class="text-[12px] text-gray-700 font-semibold">{{
+                                                    member.sheet.owner.username }}</span>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-center">
-                                            <span class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 w-[92px]">
+                                            <span
+                                                class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 w-[92px]">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Collab
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 text-right">
-                                            <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <a href="{{ member.sheet.google_url }}" target="_blank" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="View in Google Sheets"><i class="ph-bold ph-google-logo text-lg"></i></a>
+                                            <div
+                                                class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <a href="{{ member.sheet.google_url }}" target="_blank"
+                                                    class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                                                    title="View in Google Sheets"><i
+                                                        class="ph-bold ph-google-logo text-lg"></i></a>
                                                 <div class="relative">
-                                                    <button onclick="toggleDownloadMenu(event, 'c{{ member.sheet.id }}')" id="download-btn-c{{ member.sheet.id }}" class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Download">
-                                                        <i class="ph-bold ph-download-simple text-lg" id="download-icon-c{{ member.sheet.id }}"></i>
-                                                        <i class="ph-bold ph-spinner animate-spin text-lg hidden" id="download-spinner-c{{ member.sheet.id }}"></i>
+                                                    <button
+                                                        onclick="toggleDownloadMenu(event, 'c{{ member.sheet.id }}')"
+                                                        id="download-btn-c{{ member.sheet.id }}"
+                                                        class="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                                                        title="Download">
+                                                        <i class="ph-bold ph-download-simple text-lg"
+                                                            id="download-icon-c{{ member.sheet.id }}"></i>
+                                                        <i class="ph-bold ph-spinner animate-spin text-lg hidden"
+                                                            id="download-spinner-c{{ member.sheet.id }}"></i>
                                                     </button>
-                                                    <div id="download-menu-c{{ member.sheet.id }}" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 z-50 text-left overflow-hidden">
-                                                        <a href="#" onclick="handleDownload(event, '{{ member.sheet.id }}', 'xlsx')" class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700 border-b border-gray-50"><i class="ph-bold ph-file-xls mr-2 text-green-600 text-base"></i>Excel (.xlsx)</a>
-                                                        <a href="#" onclick="handleDownload(event, '{{ member.sheet.id }}', 'csv')" class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700"><i class="ph-bold ph-file-csv mr-2 text-blue-600 text-base"></i>CSV (.csv)</a>
+                                                    <div id="download-menu-c{{ member.sheet.id }}"
+                                                        class="hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 z-50 text-left overflow-hidden">
+                                                        <a href="#"
+                                                            onclick="handleDownload(event, '{{ member.sheet.id }}', 'xlsx')"
+                                                            class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700 border-b border-gray-50"><i
+                                                                class="ph-bold ph-file-xls mr-2 text-green-600 text-base"></i>Excel
+                                                            (.xlsx)</a>
+                                                        <a href="#"
+                                                            onclick="handleDownload(event, '{{ member.sheet.id }}', 'csv')"
+                                                            class="flex items-center px-4 py-2.5 text-xs font-semibold hover:bg-gray-50 text-gray-700"><i
+                                                                class="ph-bold ph-file-csv mr-2 text-blue-600 text-base"></i>CSV
+                                                            (.csv)</a>
                                                     </div>
                                                 </div>
-                                                <button onclick="openDataGrid('{{ member.sheet.id }}')" class="p-1.5 rounded-md hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors" title="Open Data Grid"><i class="ph-bold ph-table text-lg"></i></button>
+                                                <button onclick="openDataGrid('{{ member.sheet.id }}')"
+                                                    class="p-1.5 rounded-md hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
+                                                    title="Open Data Grid"><i
+                                                        class="ph-bold ph-table text-lg"></i></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -365,9 +490,13 @@
                                     {% if not created_sheets and not collaborating_sheets %}
                                     <tr>
                                         <td colspan="6" class="px-6 py-16 text-center bg-white">
-                                            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 mx-auto mb-4"><i class="ph-duotone ph-folder-open text-2xl text-gray-400"></i></div>
+                                            <div
+                                                class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 mx-auto mb-4">
+                                                <i class="ph-duotone ph-folder-open text-2xl text-gray-400"></i>
+                                            </div>
                                             <h4 class="text-gray-900 font-bold mb-1">No sheets yet</h4>
-                                            <p class="text-[13px] text-gray-500">Create your first sheet or get invited as a collaborator.</p>
+                                            <p class="text-[13px] text-gray-500">Create your first sheet or get invited
+                                                as a collaborator.</p>
                                         </td>
                                     </tr>
                                     {% endif %}
@@ -378,10 +507,11 @@
                         <!-- TAB: JOINED SHEETS -->
                         <div id="tab-joined" class="tab-content transition-opacity duration-300 opacity-0 hidden">
                             <table class="w-full text-left border-collapse">
-                                <thead class="text-xs text-gray-400 font-semibold uppercase tracking-wider border-b border-gray-100 bg-white sticky top-0 z-10">
+                                <thead
+                                    class="text-xs text-gray-400 font-semibold uppercase tracking-wider border-b border-gray-100 bg-white sticky top-0 z-10">
                                     <tr>
                                         <th class="px-6 py-4 whitespace-nowrap">Sheet Name</th>
-                                        
+                                        <th class="px-6 py-4 whitespace-nowrap">Owner</th>
                                         <th class="px-6 py-4 whitespace-nowrap">Joined Date</th>
                                         <th class="px-6 py-4 text-right whitespace-nowrap">Actions</th>
                                     </tr>
@@ -391,10 +521,14 @@
                                     <tr class="hover:bg-gray-50/70 transition-colors group cursor-pointer">
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-3.5">
-                                                <div class="w-9 h-9 rounded-lg bg-[#fff7ed] text-orange-500 flex items-center justify-center border border-orange-100 text-lg"><i class="ph-fill ph-file-text"></i></div>
+                                                <div
+                                                    class="w-9 h-9 rounded-lg bg-[#fff7ed] text-orange-500 flex items-center justify-center border border-orange-100 text-lg">
+                                                    <i class="ph-fill ph-file-text"></i>
+                                                </div>
                                                 <div>
                                                     <p class="font-bold text-gray-900">{{ member.sheet.name }}</p>
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 mt-0.5">
+                                                    <span
+                                                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 mt-0.5">
                                                         <i class="ph-fill ph-lock text-[9px]"></i> Your rows only
                                                     </span>
                                                 </div>
@@ -402,15 +536,20 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-2.5">
-                                                <div class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold border border-gray-200">{{ member.sheet.owner.username|slice:":1"|upper }}</div>
+                                                <div
+                                                    class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold border border-gray-200">
+                                                    {{ member.sheet.owner.username|slice:":1"|upper }}</div>
                                                 <div class="flex flex-col">
-                                                    <span class="font-semibold text-gray-800">{{ member.sheet.owner.username }}</span>
+                                                    <span class="font-semibold text-gray-800">{{
+                                                        member.sheet.owner.username }}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ member.joined_at|date:"M d, Y" }}</td>
+                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ member.joined_at|date:"M d,
+                                            Y" }}</td>
                                         <td class="px-6 py-4 text-right">
-                                            <button onclick="openDataGrid('{{ member.sheet.id }}')" class="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm text-xs font-semibold">
+                                            <button onclick="openDataGrid('{{ member.sheet.id }}')"
+                                                class="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm text-xs font-semibold">
                                                 Add / View My Rows <i class="ph-bold ph-caret-right"></i>
                                             </button>
                                         </td>
@@ -418,11 +557,13 @@
                                     {% empty %}
                                     <tr>
                                         <td colspan="4" class="px-6 py-16 text-center bg-white">
-                                            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 mx-auto mb-4">
+                                            <div
+                                                class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 mx-auto mb-4">
                                                 <i class="ph-duotone ph-users-three text-2xl text-gray-400"></i>
                                             </div>
                                             <h4 class="text-gray-900 font-bold mb-1">No joined sheets found</h4>
-                                            <p class="text-[13px] text-gray-500">Paste a shared link to join a sheet and add your own data.</p>
+                                            <p class="text-[13px] text-gray-500">Paste a shared link to join a sheet and
+                                                add your own data.</p>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -433,10 +574,12 @@
                 </div>
 
                 <!-- Recent Activity Sidebar -->
-                <div class="w-[320px] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col shrink-0 min-h-[500px]">
+                <div
+                    class="w-[320px] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col shrink-0 min-h-[500px]">
                     <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
                         <h3 class="font-bold text-gray-900 text-[15px]">Recent Activity</h3>
-                        <a href="{% url 'activity' %}" class="text-xs font-semibold text-blue-600 hover:underline">View all</a>
+                        <a href="{% url 'activity' %}" class="text-xs font-semibold text-blue-600 hover:underline">View
+                            all</a>
                     </div>
 
                     <div class="p-5 flex-1 flex flex-col gap-0 bg-white overflow-y-auto">
@@ -451,13 +594,14 @@
                             <!-- Avatar -->
                             {% with pic=log.user.google_credentials.profile_picture %}
                             <img src="{% if pic %}{{ pic }}{% else %}https://ui-avatars.com/api/?name={{ log.user.username }}&background=6366f1&color=fff&size=80{% endif %}"
-                                 class="w-8 h-8 rounded-full border border-gray-200 z-10 bg-white shadow-sm ring-2 ring-white shrink-0 object-cover"
-                                 title="{{ log.user.username }}">
+                                class="w-8 h-8 rounded-full border border-gray-200 z-10 bg-white shadow-sm ring-2 ring-white shrink-0 object-cover"
+                                title="{{ log.user.username }}">
                             {% endwith %}
 
                             <div class="flex-1 min-w-0">
                                 <p class="text-[12.5px] text-gray-600 leading-snug">
-                                    <span class="font-bold text-gray-900">{{ log.user.first_name|default:log.user.username }}</span>
+                                    <span class="font-bold text-gray-900">{{
+                                        log.user.first_name|default:log.user.username }}</span>
                                     {% if log.action == "sheet_created" %}created sheet{% endif %}
                                     {% if log.action == "row_added" %}added a row to{% endif %}
                                     {% if log.action == "row_updated" %}updated a row in{% endif %}
@@ -467,21 +611,25 @@
                                 </p>
                                 {% if log.sheet %}
                                 <div class="flex items-center justify-between mt-1">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold border border-slate-200 truncate max-w-[140px]">
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold border border-slate-200 truncate max-w-[140px]">
                                         <i class="ph-fill ph-table text-[9px]"></i>
                                         {{ log.sheet.name|truncatechars:20 }}
                                     </span>
-                                    <span class="text-[10px] font-medium text-gray-400 shrink-0 ml-1">{{ log.created_at|timesince|slice:":8" }} ago</span>
+                                    <span class="text-[10px] font-medium text-gray-400 shrink-0 ml-1">{{
+                                        log.created_at|timesince|slice:":8" }} ago</span>
                                 </div>
                                 {% else %}
-                                <p class="text-[10px] text-gray-400 mt-0.5">{{ log.created_at|timesince|slice:":8" }} ago</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">{{ log.created_at|timesince|slice:":8" }}
+                                    ago</p>
                                 {% endif %}
                             </div>
                         </div>
                         {% endwith %}
                         {% empty %}
                         <div class="flex-1 flex flex-col items-center justify-center py-10 text-center">
-                            <div class="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center mb-3">
+                            <div
+                                class="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center mb-3">
                                 <i class="ph-duotone ph-activity text-xl text-gray-300"></i>
                             </div>
                             <p class="text-[13px] text-gray-500 font-medium">No activity yet</p>
@@ -491,25 +639,30 @@
 
                     </div>
 
-                    <a href="{% url 'activity' %}" class="block bg-white hover:bg-gray-50 transition-colors border-t border-gray-100 py-3.5 text-center text-[13px] font-bold text-gray-600">
+                    <a href="{% url 'activity' %}"
+                        class="block bg-white hover:bg-gray-50 transition-colors border-t border-gray-100 py-3.5 text-center text-[13px] font-bold text-gray-600">
                         View All Activity <i class="ph-bold ph-caret-right ml-0.5 text-[11px]"></i>
                     </a>
                 </div>
 
             </div>
-            
+
         </main>
     </div>
 </div>
 
 
-<div id="removeCollaboratorModal" class="fixed inset-0 bg-gray-900/50 hidden backdrop-blur-sm z-[100] flex items-center justify-center opacity-0 transition-opacity duration-300">
-    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300 overflow-hidden relative">
+<div id="removeCollaboratorModal"
+    class="fixed inset-0 bg-gray-900/50 hidden backdrop-blur-sm z-[100] flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div
+        class="bg-white rounded-2xl w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300 overflow-hidden relative">
         <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
             <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <i class="ph-bold ph-users text-blue-500"></i> Manage Collaborators
             </h3>
-            <button type="button" onclick="closeRemoveCollaboratorModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"><i class="ph-bold ph-x text-lg"></i></button>
+            <button type="button" onclick="closeRemoveCollaboratorModal()"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"><i
+                    class="ph-bold ph-x text-lg"></i></button>
         </div>
         <div class="p-6">
             <!-- Combined Add Collaborator Form -->
@@ -518,50 +671,53 @@
                     <input type="hidden" id="manageCollabSheetId">
                     <label class="block text-[13px] font-bold text-blue-900">Invite a Collaborator</label>
                     <div class="flex items-center gap-2">
-                        <input type="email" id="manageCollabEmail" required placeholder="colleague@example.com" class="flex-1 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all">
-                        <button type="submit" id="btnManageAddCollab" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
+                        <input type="email" id="manageCollabEmail" required placeholder="colleague@example.com"
+                            class="flex-1 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all">
+                        <button type="submit" id="btnManageAddCollab"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
                             Add
                         </button>
                     </div>
                 </form>
             </div>
-            
+
             <div class="border-t border-gray-100 mt-2 pt-4">
                 <h4 class="text-[13px] font-bold text-gray-700 mb-3">Current Collaborators</h4>
 
-            <div id="manageCollabListContainer" class="flex flex-col gap-3 max-h-[300px] overflow-y-auto mb-4 p-1">
-                <!-- Dynamic List Injected via JS -->
-            </div>
-            <div id="remCollabError" class="hidden my-4 p-3 bg-red-50 text-red-600 rounded-lg text-xs font-semibold border border-red-100 items-center justify-start gap-2">
-                <i class="ph-fill ph-warning-circle text-base"></i> <span id="remCollabErrorMsg"></span>
+                <div id="manageCollabListContainer" class="flex flex-col gap-3 max-h-[300px] overflow-y-auto mb-4 p-1">
+                    <!-- Dynamic List Injected via JS -->
+                </div>
+                <div id="remCollabError"
+                    class="hidden my-4 p-3 bg-red-50 text-red-600 rounded-lg text-xs font-semibold border border-red-100 items-center justify-start gap-2">
+                    <i class="ph-fill ph-warning-circle text-base"></i> <span id="remCollabErrorMsg"></span>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 
 <script>
     function openRemoveCollaboratorModal(sheetId, btnElem) {
         let collabsText = btnElem.getAttribute('data-collabs');
-        collabsText = collabsText.replace(/,\s*\]$/, ']'); 
+        collabsText = collabsText.replace(/,\s*\]$/, ']');
         let collabs = [];
-        try { 
-            collabs = JSON.parse(collabsText); 
-        } catch(e) { 
+        try {
+            collabs = JSON.parse(collabsText);
+        } catch (e) {
             console.error(e);
-            collabs = []; 
+            collabs = [];
         }
-        
+
         const mSheetIdInput = document.getElementById('manageCollabSheetId');
         if (mSheetIdInput) mSheetIdInput.value = sheetId;
 
         const listContainer = document.getElementById('manageCollabListContainer');
         if (!listContainer) return;
         listContainer.innerHTML = '';
-        
+
         collabs = collabs.filter(c => c && c.email);
-        
-        if(collabs.length === 0) {
+
+        if (collabs.length === 0) {
             listContainer.innerHTML = '<p class="text-sm text-gray-400 text-center py-4 font-semibold">No active collaborators found.</p>';
         } else {
             collabs.forEach(c => {
@@ -570,7 +726,7 @@
                 div.innerHTML = `
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
-                            ${c.username.substring(0,2)}
+                            ${c.username.substring(0, 2)}
                         </div>
                         <div>
                             <p class="font-bold text-gray-800 text-[13px] leading-tight">${c.username}</p>
@@ -585,7 +741,7 @@
                 listContainer.appendChild(div);
             });
         }
-        
+
         const errDiv = document.getElementById('remCollabError');
         if (errDiv) {
             errDiv.classList.add('hidden');
@@ -600,7 +756,7 @@
             modal.querySelector('.transform').classList.remove('scale-95');
         }, 10);
     }
-    
+
     function closeRemoveCollaboratorModal() {
         const modal = document.getElementById('removeCollaboratorModal');
         if (!modal) return;
@@ -612,15 +768,15 @@
     }
 
     async function removeCollabReq(sheetId, email, btnElem) {
-        if(!confirm(`Remove ${email} from collaborators? They will lose write access to the Google Sheet.`)) return;
-        
+        if (!confirm(`Remove ${email} from collaborators? They will lose write access to the Google Sheet.`)) return;
+
         const errorDiv = document.getElementById('remCollabError');
         const errorMsg = document.getElementById('remCollabErrorMsg');
-        
+
         const originalHtml = btnElem.innerHTML;
         btnElem.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-lg text-emerald-500"></i>';
         btnElem.disabled = true;
-        
+
         try {
             const response = await fetch(`/api/sheets/${sheetId}/collaborators/remove/`, {
                 method: 'POST',
@@ -631,7 +787,7 @@
                 body: JSON.stringify({ email: email })
             });
             const data = await response.json();
-            
+
             if (response.ok) {
                 const row = btnElem.closest('div.flex');
                 row.style.opacity = '0';
@@ -639,7 +795,7 @@
                 setTimeout(() => {
                     row.remove();
                     const listContainer = document.getElementById('manageCollabListContainer');
-                    if(listContainer && listContainer.children.length === 0) {
+                    if (listContainer && listContainer.children.length === 0) {
                         listContainer.innerHTML = '<p class="text-sm text-gray-400 text-center py-4 font-semibold">No active collaborators found.</p>';
                     }
                 }, 300);
@@ -652,7 +808,7 @@
                 btnElem.innerHTML = originalHtml;
                 btnElem.disabled = false;
             }
-        } catch(e) {
+        } catch (e) {
             if (errorMsg) errorMsg.innerText = 'Network Error';
             if (errorDiv) {
                 errorDiv.classList.remove('hidden');
@@ -667,19 +823,19 @@
     window.addEventListener('DOMContentLoaded', () => {
         const addForm = document.getElementById('manageAddCollabForm');
         if (addForm) {
-            addForm.addEventListener('submit', async function(e) {
+            addForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const sheetId = document.getElementById('manageCollabSheetId').value;
                 const emailInput = document.getElementById('manageCollabEmail');
                 const btn = document.getElementById('btnManageAddCollab');
                 const errorDiv = document.getElementById('remCollabError');
                 const errorMsg = document.getElementById('remCollabErrorMsg');
-                
+
                 const email = emailInput.value;
                 btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i>';
                 btn.disabled = true;
                 if (errorDiv) errorDiv.classList.add('hidden');
-                
+
                 try {
                     const response = await fetch(`/api/sheets/${sheetId}/collaborators/`, {
                         method: 'POST',
@@ -690,7 +846,7 @@
                         body: JSON.stringify({ email: email })
                     });
                     const data = await response.json();
-                    
+
                     if (response.ok) {
                         window.location.reload();
                     } else {
@@ -702,7 +858,7 @@
                         btn.innerHTML = 'Add';
                         btn.disabled = false;
                     }
-                } catch(err) {
+                } catch (err) {
                     if (errorMsg) errorMsg.innerText = 'Network error occurred';
                     if (errorDiv) {
                         errorDiv.classList.remove('hidden');
@@ -717,24 +873,24 @@
 
 
 
-function switchTab(tabName) {
+    function switchTab(tabName) {
         const tabs = ['created', 'joined'];
-        
+
         tabs.forEach(t => {
             const content = document.getElementById(`tab-${t}`);
             const btn = document.getElementById(`btn-${t}`);
             if (!content || !btn) return;
-            
+
             if (t === tabName) {
                 content.classList.remove('hidden');
                 setTimeout(() => content.classList.remove('opacity-0'), 10);
-                
+
                 btn.classList.add('border-gray-900', 'text-gray-900', 'font-semibold');
                 btn.classList.remove('border-transparent', 'text-gray-400', 'font-normal');
             } else {
                 content.classList.add('opacity-0');
                 setTimeout(() => content.classList.add('hidden'), 300);
-                
+
                 btn.classList.remove('border-gray-900', 'text-gray-900', 'font-semibold');
                 btn.classList.add('border-transparent', 'text-gray-400', 'font-normal');
             }
@@ -744,189 +900,194 @@ function switchTab(tabName) {
 
 <!-- Create Sheet Modal -->
 <div id="createSheetModal" class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
-  <!-- Backdrop -->
-  <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out absolute" 
-       onclick="closeModal('createSheetModal')"></div>
+    <!-- Backdrop -->
+    <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out absolute"
+        onclick="closeModal('createSheetModal')"></div>
 
-  <!-- Modal Panel -->
-  <div class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-2xl shadow-2xl sm:my-8 sm:w-full sm:max-w-lg border border-border max-h-[90vh] overflow-y-auto">
-    
-    <div class="px-6 py-5 border-b border-border flex justify-between items-center bg-gray-50/50 sticky top-0">
-      <h3 class="text-lg font-semibold text-foreground flex items-center gap-2">
-        <div class="p-1.5 bg-primary/10 rounded-md text-primary">
-          <i class="ph-bold ph-file-plus"></i>
+    <!-- Modal Panel -->
+    <div
+        class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-2xl shadow-2xl sm:my-8 sm:w-full sm:max-w-lg border border-border max-h-[90vh] overflow-y-auto">
+
+        <div class="px-6 py-5 border-b border-border flex justify-between items-center bg-gray-50/50 sticky top-0">
+            <h3 class="text-lg font-semibold text-foreground flex items-center gap-2">
+                <div class="p-1.5 bg-primary/10 rounded-md text-primary">
+                    <i class="ph-bold ph-file-plus"></i>
+                </div>
+                Create New Sheet
+            </h3>
+            <button onclick="closeModal('createSheetModal')"
+                class="text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-gray-100">
+                <i class="ph-bold ph-x text-lg"></i>
+            </button>
         </div>
-        Create New Sheet
-      </h3>
-      <button onclick="closeModal('createSheetModal')" 
-              class="text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-gray-100">
-        <i class="ph-bold ph-x text-lg"></i>
-      </button>
+
+        <form id="createSheetForm" class="px-6 py-6 space-y-5">
+            <!-- ALL FORM CONTENT REMAINS SAME - just copy from your previous version -->
+            <div>
+                <label for="sheet-name" class="block text-sm font-medium text-foreground mb-1.5">Sheet Name</label>
+                <div class="relative">
+                    <input type="text" id="sheet-name" name="title" required placeholder="e.g. Q1 Marketing Survey"
+                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm" />
+                    <i class="ph-bold ph-text-t absolute left-3 top-3 text-muted"></i>
+                </div>
+            </div>
+
+            <div>
+                <label for="sheet-desc" class="block text-sm font-medium text-foreground mb-1.5">
+                    Description <span class="text-muted font-normal">(Optional)</span>
+                </label>
+                <textarea id="sheet-desc" name="description" rows="3"
+                    placeholder="Briefly describe the purpose of this sheet..."
+                    class="w-full px-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm resize-none"></textarea>
+            </div>
+
+            <div>
+                <label for="sheet-cols" class="block text-sm font-medium text-foreground mb-1.5">Columns</label>
+                <div class="relative">
+                    <input type="text" id="sheet-cols" name="columns" placeholder="Name, Email, Phone, Status"
+                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm" />
+                    <i class="ph-bold ph-columns absolute left-3 top-3 text-muted"></i>
+                </div>
+                <p class="text-xs text-muted mt-2 flex items-center gap-1">
+                    <i class="ph-fill ph-info"></i> Separate column names with commas.
+                </p>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3">
+                <button type="button" onclick="closeModal('createSheetModal')"
+                    class="px-5 py-2.5 rounded-lg border border-border text-sm font-medium text-muted hover:text-foreground hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button id="btn-create-submit" type="submit"
+                    class="px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary_hover transition-all shadow-md shadow-slate-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                    <span>Create Sheet</span>
+                    <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+        </form>
     </div>
-
-    <form id="createSheetForm" class="px-6 py-6 space-y-5">
-      <!-- ALL FORM CONTENT REMAINS SAME - just copy from your previous version -->
-      <div>
-        <label for="sheet-name" class="block text-sm font-medium text-foreground mb-1.5">Sheet Name</label>
-        <div class="relative">
-          <input type="text" id="sheet-name" name="title" required 
-                 placeholder="e.g. Q1 Marketing Survey"
-                 class="w-full pl-10 pr-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm" />
-          <i class="ph-bold ph-text-t absolute left-3 top-3 text-muted"></i>
-        </div>
-      </div>
-
-      <div>
-        <label for="sheet-desc" class="block text-sm font-medium text-foreground mb-1.5">
-          Description <span class="text-muted font-normal">(Optional)</span>
-        </label>
-        <textarea id="sheet-desc" name="description" rows="3" 
-                  placeholder="Briefly describe the purpose of this sheet..."
-                  class="w-full px-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm resize-none"></textarea>
-      </div>
-
-      <div>
-        <label for="sheet-cols" class="block text-sm font-medium text-foreground mb-1.5">Columns</label>
-        <div class="relative">
-          <input type="text" id="sheet-cols" name="columns" 
-                 placeholder="Name, Email, Phone, Status"
-                 class="w-full pl-10 pr-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm" />
-          <i class="ph-bold ph-columns absolute left-3 top-3 text-muted"></i>
-        </div>
-        <p class="text-xs text-muted mt-2 flex items-center gap-1">
-          <i class="ph-fill ph-info"></i> Separate column names with commas.
-        </p>
-      </div>
-
-      <div class="pt-4 flex justify-end gap-3">
-        <button type="button" onclick="closeModal('createSheetModal')"
-                class="px-5 py-2.5 rounded-lg border border-border text-sm font-medium text-muted hover:text-foreground hover:bg-gray-50 transition-colors">
-          Cancel
-        </button>
-        <button id="btn-create-submit" type="submit"
-                class="px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary_hover transition-all shadow-md shadow-slate-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-          <span>Create Sheet</span>
-          <i class="ph-bold ph-arrow-right"></i>
-        </button>
-      </div>
-    </form>
-  </div>
 </div>
 
 <!-- Join Sheet Modal -->
 <div id="joinSheetModal" class="modal-wrapper fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
-  <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out" 
-       onclick="closeModal('joinSheetModal')"></div>
-  
-  <div class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-2xl sm:my-8 sm:w-full sm:max-w-lg shadow-2xl border border-gray-200">
-    <div class="px-6 py-5 border-b border-border flex justify-between items-center bg-gray-50/50 sticky top-0 rounded-t-2xl">
-      <h3 class="text-lg font-semibold flex items-center gap-2 text-gray-900"><div class="p-1.5 bg-blue-100 rounded-md text-blue-600"><i class="ph-bold ph-link text-lg"></i></div> Join a Sheet</h3>
-      <button onclick="closeModal('joinSheetModal')" class="text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-gray-100">
-        <i class="ph-bold ph-x text-lg"></i>
-      </button>
-    </div>
+    <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out"
+        onclick="closeModal('joinSheetModal')"></div>
 
-    <form id="joinSheetForm" class="px-6 py-6 space-y-5">
-        <div>
-            <label class="block text-[13px] font-bold text-gray-900 mb-1">Invite URL or Token</label>
-            <p class="text-sm text-gray-500 mb-3 leading-relaxed">Paste the unique link or token shared by the sheet owner to gain access.</p>
-            <input type="text" id="joinSheetUrl" required 
-                 placeholder="e.g. http://127.0.0.1:8000/join/abc123xyz/"
-                 class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm placeholder:text-gray-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-medium shadow-sm bg-gray-50" />
+    <div
+        class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-2xl sm:my-8 sm:w-full sm:max-w-lg shadow-2xl border border-gray-200">
+        <div
+            class="px-6 py-5 border-b border-border flex justify-between items-center bg-gray-50/50 sticky top-0 rounded-t-2xl">
+            <h3 class="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                <div class="p-1.5 bg-blue-100 rounded-md text-blue-600"><i class="ph-bold ph-link text-lg"></i></div>
+                Join a Sheet
+            </h3>
+            <button onclick="closeModal('joinSheetModal')"
+                class="text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-gray-100">
+                <i class="ph-bold ph-x text-lg"></i>
+            </button>
         </div>
-        <div class="flex justify-end gap-3 pt-2">
-            <button type="button" onclick="closeModal('joinSheetModal')"
+
+        <form id="joinSheetForm" class="px-6 py-6 space-y-5">
+            <div>
+                <label class="block text-[13px] font-bold text-gray-900 mb-1">Invite URL or Token</label>
+                <p class="text-sm text-gray-500 mb-3 leading-relaxed">Paste the unique link or token shared by the sheet
+                    owner to gain access.</p>
+                <input type="text" id="joinSheetUrl" required placeholder="e.g. http://127.0.0.1:8000/join/abc123xyz/"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm placeholder:text-gray-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-medium shadow-sm bg-gray-50" />
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal('joinSheetModal')"
                     class="px-5 py-2.5 rounded-lg border border-border text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              Cancel
-            </button>
-            <button type="submit" id="btn-join-submit"
+                    Cancel
+                </button>
+                <button type="submit" id="btn-join-submit"
                     class="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 shadow-blue-500/20">
-                Join Sheet <i class="ph-bold ph-arrow-right"></i>
-            </button>
-        </div>
-    </form>
-  </div>
+                    Join Sheet <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Share Sheet Modal -->
 <div id="shareSheetModal" class="modal-wrapper fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
-  <!-- Backdrop -->
-  <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out" 
-       onclick="closeModal('shareSheetModal')"></div>
-  
-  <!-- Modal Panel -->
-  <div class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-xl p-6 w-full max-w-md shadow-2xl border border-border">
-    <h3 class="text-lg font-semibold mb-2">Sheet Created 🎉</h3>
-    <p class="text-sm text-muted mb-4">Share this link with others</p>
+    <!-- Backdrop -->
+    <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out"
+        onclick="closeModal('shareSheetModal')"></div>
 
-    <input id="shareLinkInput"
-           class="w-full px-3 py-2 border rounded-md text-sm"
-           readonly />
+    <!-- Modal Panel -->
+    <div
+        class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-xl p-6 w-full max-w-md shadow-2xl border border-border">
+        <h3 class="text-lg font-semibold mb-2">Sheet Created 🎉</h3>
+        <p class="text-sm text-muted mb-4">Share this link with others</p>
 
-    <div class="flex justify-end gap-3 mt-4">
-      <button onclick="copyShareLink()"
-              class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary_hover transition-colors">
-        Copy Link
-      </button>
-      <a id="openSheetBtn"
-         target="_blank"
-         class="px-4 py-2 border border-border rounded-md text-muted hover:text-foreground hover:bg-gray-50 transition-colors">
-        Open
-      </a>
+        <input id="shareLinkInput" class="w-full px-3 py-2 border rounded-md text-sm" readonly />
+
+        <div class="flex justify-end gap-3 mt-4">
+            <button onclick="copyShareLink()"
+                class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary_hover transition-colors">
+                Copy Link
+            </button>
+            <a id="openSheetBtn" target="_blank"
+                class="px-4 py-2 border border-border rounded-md text-muted hover:text-foreground hover:bg-gray-50 transition-colors">
+                Open
+            </a>
+        </div>
     </div>
-  </div>
 </div>
 
 
 <!-- Delete Confirmation Modal -->
 <div id="deleteConfirmModal" class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
-  <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out absolute" 
-       onclick="closeModal('deleteConfirmModal')"></div>
-  
-  <div class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-2xl shadow-2xl max-w-md w-full border border-border">
-    <div class="p-6 border-b border-border">
-      <h3 class="text-lg font-semibold text-foreground flex items-center gap-2 text-red-600">
-        <i class="ph-bold ph-trash text-xl"></i>
-        Delete Sheet
-      </h3>
+    <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out absolute"
+        onclick="closeModal('deleteConfirmModal')"></div>
+
+    <div
+        class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-2xl shadow-2xl max-w-md w-full border border-border">
+        <div class="p-6 border-b border-border">
+            <h3 class="text-lg font-semibold text-foreground flex items-center gap-2 text-red-600">
+                <i class="ph-bold ph-trash text-xl"></i>
+                Delete Sheet
+            </h3>
+        </div>
+
+        <div class="p-6">
+            <p class="text-sm text-foreground mb-4">Are you sure you want to delete <strong
+                    id="deleteSheetName"></strong>?</p>
+            <p class="text-xs text-red-500 bg-red-50 p-3 rounded-lg border border-red-100">
+                <i class="ph-fill ph-warning-circle inline-block mr-2"></i>
+                This action cannot be undone!
+            </p>
+        </div>
+
+        <div class="px-6 py-4 bg-gray-50 border-t border-border flex justify-end gap-3">
+            <button onclick="closeModal('deleteConfirmModal')"
+                class="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted hover:text-foreground hover:bg-white transition-colors">
+                Cancel
+            </button>
+            <button id="confirmDeleteBtn"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                onclick="confirmDeleteSheet()">
+                <i class="ph-bold ph-trash"></i>
+                Delete
+            </button>
+        </div>
     </div>
-    
-    <div class="p-6">
-      <p class="text-sm text-foreground mb-4">Are you sure you want to delete <strong id="deleteSheetName"></strong>?</p>
-      <p class="text-xs text-red-500 bg-red-50 p-3 rounded-lg border border-red-100">
-        <i class="ph-fill ph-warning-circle inline-block mr-2"></i>
-        This action cannot be undone!
-      </p>
-    </div>
-    
-    <div class="px-6 py-4 bg-gray-50 border-t border-border flex justify-end gap-3">
-      <button onclick="closeModal('deleteConfirmModal')"
-              class="px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted hover:text-foreground hover:bg-white transition-colors">
-        Cancel
-      </button>
-      <button id="confirmDeleteBtn"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-              onclick="confirmDeleteSheet()">
-        <i class="ph-bold ph-trash"></i>
-        Delete
-      </button>
-    </div>
-  </div>
 </div>
 
 
 {% comment %} open sheet in modal for joined sheet {% endcomment %}
 <div id="dataGridModal" class="relative z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    
-    <div id="gridBackdrop" 
-         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity opacity-0 duration-300 ease-out"
-         onclick="closeDataGrid()"></div>
-  
+
+    <div id="gridBackdrop"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity opacity-0 duration-300 ease-out"
+        onclick="closeDataGrid()"></div>
+
     <div class="fixed inset-0 z-10 flex items-center justify-center p-4 sm:p-6">
-        
-        <div id="gridPanel" 
-             class="relative w-full max-w-6xl h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col opacity-0 scale-95 transition-all duration-300 ease-out overflow-hidden ring-1 ring-black/5">
-            
+
+        <div id="gridPanel"
+            class="relative w-full max-w-6xl h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col opacity-0 scale-95 transition-all duration-300 ease-out overflow-hidden ring-1 ring-black/5">
+
             <div class="px-6 py-4 border-b border-border bg-white flex justify-between items-center shrink-0 z-20">
                 <div>
                     <h3 id="grid-title" class="text-xl font-bold text-gray-900">Loading...</h3>
@@ -935,24 +1096,29 @@ function switchTab(tabName) {
                         Synced with Google Sheet
                     </p>
                 </div>
-                
+
                 <div class="flex items-center gap-3">
-                    <button onclick="fetchGridData()" class="p-2 text-muted hover:text-foreground hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
+                    <button onclick="fetchGridData()"
+                        class="p-2 text-muted hover:text-foreground hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Refresh">
                         <i class="ph-bold ph-arrows-clockwise text-lg"></i>
                     </button>
                     <div class="h-6 w-px bg-gray-200"></div>
-                    <button onclick="openDrawer('create')" class="bg-primary hover:bg-primary_hover text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 transition-all">
+                    <button onclick="openDrawer('create')"
+                        class="bg-primary hover:bg-primary_hover text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 transition-all">
                         <i class="ph-bold ph-plus"></i> Add Record
                     </button>
-                    <button onclick="closeDataGrid()" class="p-2 text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                    <button onclick="closeDataGrid()"
+                        class="p-2 text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                         <i class="ph-bold ph-x text-lg"></i>
                     </button>
                 </div>
             </div>
 
             <div class="flex-1 relative overflow-hidden flex flex-col bg-gray-50/50">
-                
-                <div id="grid-loader" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+
+                <div id="grid-loader"
+                    class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
                     <i class="ph-duotone ph-spinner animate-spin text-4xl text-primary mb-3"></i>
                     <p class="text-sm font-medium text-foreground">Fetching records...</p>
                 </div>
@@ -961,40 +1127,45 @@ function switchTab(tabName) {
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm">
                             <tr id="grid-header-row">
-                                </tr>
+                            </tr>
                         </thead>
                         <tbody id="grid-body" class="bg-white divide-y divide-gray-100">
-                            </tbody>
+                        </tbody>
                     </table>
-                    
+
                     <div id="grid-empty" class="hidden flex flex-col items-center justify-center py-20 text-center">
                         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                             <i class="ph-duotone ph-table text-3xl text-gray-400"></i>
                         </div>
                         <h4 class="text-foreground font-medium">No records found</h4>
                         <p class="text-sm text-muted mt-1">You haven't added any data to this sheet yet.</p>
-                        <button onclick="openDrawer('create')" class="mt-4 text-primary text-sm font-medium hover:underline">Add your first record</button>
+                        <button onclick="openDrawer('create')"
+                            class="mt-4 text-primary text-sm font-medium hover:underline">Add your first record</button>
                     </div>
                 </div>
             </div>
 
-            <div id="formDrawer" class="absolute top-0 right-0 bottom-0 w-96 bg-white border-l border-border shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-30 flex flex-col">
-                
+            <div id="formDrawer"
+                class="absolute top-0 right-0 bottom-0 w-96 bg-white border-l border-border shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-30 flex flex-col">
+
                 <div class="px-6 py-4 border-b border-border bg-gray-50 flex justify-between items-center">
                     <h4 id="drawer-title" class="font-semibold text-foreground">New Record</h4>
-                    <button onclick="closeDrawer()" class="text-muted hover:text-foreground p-1 rounded-md hover:bg-gray-200">
+                    <button onclick="closeDrawer()"
+                        class="text-muted hover:text-foreground p-1 rounded-md hover:bg-gray-200">
                         <i class="ph-bold ph-x"></i>
                     </button>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-6">
                     <form id="dynamicForm" class="space-y-5">
-                        </form>
+                    </form>
                 </div>
 
                 <div class="px-6 py-4 border-t border-border bg-white flex justify-end gap-3">
-                    <button type="button" onclick="closeDrawer()" class="px-4 py-2 text-sm text-muted hover:text-foreground font-medium">Cancel</button>
-                    <button type="button" onclick="submitForm()" id="btn-save" class="bg-primary hover:bg-primary_hover text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2">
+                    <button type="button" onclick="closeDrawer()"
+                        class="px-4 py-2 text-sm text-muted hover:text-foreground font-medium">Cancel</button>
+                    <button type="button" onclick="submitForm()" id="btn-save"
+                        class="bg-primary hover:bg-primary_hover text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2">
                         Save Record
                     </button>
                 </div>
@@ -1007,121 +1178,121 @@ function switchTab(tabName) {
 
 <script>
 
-function switchTab(tabName) {
-    const tabs = ['created', 'joined'];
-    
-    tabs.forEach(t => {
-        const content = document.getElementById(`tab-${t}`);
-        const btn = document.getElementById(`btn-${t}`);
-        
-        if (t === tabName) {
-            // Show logic
-            content.classList.remove('hidden');
-            // Small delay to allow display:block to apply before changing opacity for transition
-            setTimeout(() => content.classList.remove('opacity-0'), 10);
-            
-            // Button Styles
-            btn.classList.add('border-primary', 'text-primary');
-            btn.classList.remove('border-transparent', 'text-muted');
-        } else {
-            // Hide logic
-            content.classList.add('opacity-0');
-            setTimeout(() => content.classList.add('hidden'), 300); // Wait for transition
-            
-            // Button Styles
-            btn.classList.remove('border-primary', 'text-primary');
-            btn.classList.add('border-transparent', 'text-muted');
-        }
-    });
-}
+    function switchTab(tabName) {
+        const tabs = ['created', 'joined'];
 
-let isRefreshing = false; // Prevent multiple refresh calls
+        tabs.forEach(t => {
+            const content = document.getElementById(`tab-${t}`);
+            const btn = document.getElementById(`btn-${t}`);
 
-// === CORE MODAL FUNCTIONS ===
-function openModal(modalId, initData = null) {
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-        console.error(`Modal ${modalId} not found`);
-        return;
-    }
+            if (t === tabName) {
+                // Show logic
+                content.classList.remove('hidden');
+                // Small delay to allow display:block to apply before changing opacity for transition
+                setTimeout(() => content.classList.remove('opacity-0'), 10);
 
-    const backdrop = modal.querySelector('.modal-backdrop');
-    const panel = modal.querySelector('.modal-panel');
+                // Button Styles
+                btn.classList.add('border-primary', 'text-primary');
+                btn.classList.remove('border-transparent', 'text-muted');
+            } else {
+                // Hide logic
+                content.classList.add('opacity-0');
+                setTimeout(() => content.classList.add('hidden'), 300); // Wait for transition
 
-    if (initData && modalId === 'shareSheetModal') {
-        initializeShareModal(initData);
-    }
-
-    modal.classList.remove("hidden");
-    
-    setTimeout(() => {
-        if (backdrop) backdrop.classList.remove("opacity-0");
-        if (panel) {
-            panel.classList.remove("opacity-0", "scale-95");
-            panel.classList.add("opacity-100", "scale-100");
-        }
-    }, 10);
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) return;
-
-    const backdrop = modal.querySelector('.modal-backdrop');
-    const panel = modal.querySelector('.modal-panel');
-
-    // Animate out
-    if (backdrop) backdrop.classList.add("opacity-0");
-    if (panel) {
-        panel.classList.remove("opacity-100", "scale-100");
-        panel.classList.add("opacity-0", "scale-95");
-    }
-
-    // Hide & refresh after animation
-    setTimeout(() => {
-        modal.classList.add("hidden");
-        resetModal(modalId);
-        
-        // 🚀 AUTO-REFRESH CREATED SHEETS TABLE
-        if (modalId === 'shareSheetModal') {
-            refreshCreatedSheetsTable();
-        }
-    }, 300);
-}
-
-// === REFRESH FUNCTION - Updates table without page reload ===
-async function refreshCreatedSheetsTable() {
-    if (isRefreshing) return; // Prevent duplicate calls
-    
-    isRefreshing = true;
-    
-    try {
-        const response = await fetch('/sheets/created/', { // Your endpoint to get created sheets
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                // Button Styles
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-transparent', 'text-muted');
             }
         });
-
-        if (response.ok) {
-            const sheetsData = await response.json();
-            updateSheetsTable(sheetsData);
-        }
-    } catch (error) {
-        console.error('Refresh failed:', error);
-    } finally {
-        isRefreshing = false;
     }
-}
 
-// === UPDATE TABLE WITH NEW DATA ===
-function updateSheetsTable(sheetsData) {
-    const tbody = document.querySelector('#tab-created tbody');
-    if (!tbody || !sheetsData || !sheetsData.sheets) return;
+    let isRefreshing = false; // Prevent multiple refresh calls
 
-    if (sheetsData.sheets.length === 0) {
-        tbody.innerHTML = `
+    // === CORE MODAL FUNCTIONS ===
+    function openModal(modalId, initData = null) {
+        const modal = document.getElementById(modalId);
+        if (!modal) {
+            console.error(`Modal ${modalId} not found`);
+            return;
+        }
+
+        const backdrop = modal.querySelector('.modal-backdrop');
+        const panel = modal.querySelector('.modal-panel');
+
+        if (initData && modalId === 'shareSheetModal') {
+            initializeShareModal(initData);
+        }
+
+        modal.classList.remove("hidden");
+
+        setTimeout(() => {
+            if (backdrop) backdrop.classList.remove("opacity-0");
+            if (panel) {
+                panel.classList.remove("opacity-0", "scale-95");
+                panel.classList.add("opacity-100", "scale-100");
+            }
+        }, 10);
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        const backdrop = modal.querySelector('.modal-backdrop');
+        const panel = modal.querySelector('.modal-panel');
+
+        // Animate out
+        if (backdrop) backdrop.classList.add("opacity-0");
+        if (panel) {
+            panel.classList.remove("opacity-100", "scale-100");
+            panel.classList.add("opacity-0", "scale-95");
+        }
+
+        // Hide & refresh after animation
+        setTimeout(() => {
+            modal.classList.add("hidden");
+            resetModal(modalId);
+
+            // 🚀 AUTO-REFRESH CREATED SHEETS TABLE
+            if (modalId === 'shareSheetModal') {
+                refreshCreatedSheetsTable();
+            }
+        }, 300);
+    }
+
+    // === REFRESH FUNCTION - Updates table without page reload ===
+    async function refreshCreatedSheetsTable() {
+        if (isRefreshing) return; // Prevent duplicate calls
+
+        isRefreshing = true;
+
+        try {
+            const response = await fetch('/sheets/created/', { // Your endpoint to get created sheets
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                }
+            });
+
+            if (response.ok) {
+                const sheetsData = await response.json();
+                updateSheetsTable(sheetsData);
+            }
+        } catch (error) {
+            console.error('Refresh failed:', error);
+        } finally {
+            isRefreshing = false;
+        }
+    }
+
+    // === UPDATE TABLE WITH NEW DATA ===
+    function updateSheetsTable(sheetsData) {
+        const tbody = document.querySelector('#tab-created tbody');
+        if (!tbody || !sheetsData || !sheetsData.sheets) return;
+
+        if (sheetsData.sheets.length === 0) {
+            tbody.innerHTML = `
             <tr>
                 <td colspan="5" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-muted">
@@ -1132,11 +1303,11 @@ function updateSheetsTable(sheetsData) {
                 </td>
             </tr>
         `;
-        return;
-    }
+            return;
+        }
 
-    // Build new rows
-    const rows = sheetsData.sheets.map(sheet => `
+        // Build new rows
+        const rows = sheetsData.sheets.map(sheet => `
         <tr class="hover:bg-gray-50/80 transition-colors group">
             <td class="px-6 py-4 font-medium text-foreground flex items-center gap-3">
                 <div class="p-2 bg-green-100 text-green-700 rounded-md">
@@ -1189,421 +1360,420 @@ function updateSheetsTable(sheetsData) {
         </tr>
     `).join('');
 
-    tbody.innerHTML = rows;
-}
-
-// === HTML ESCAPE for security ===
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// === MODAL SPECIFIC ===
-function initializeShareModal(data) {
-    document.getElementById("shareLinkInput").value = data.share_link;
-    document.getElementById("openSheetBtn").href = data.sheet_url;
-}
-
-function resetModal(modalId) {
-    if (modalId === 'createSheetModal') {
-        const form = document.getElementById("createSheetForm");
-        const btn = document.getElementById("btn-create-submit");
-        if (form) form.reset();
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = `<span>Create Sheet</span><i class="ph-bold ph-arrow-right"></i>`;
-        }
-    } else if (modalId === 'shareSheetModal') {
-        document.getElementById("shareLinkInput").value = "";
-    } else if (modalId === 'joinSheetModal') {
-        const jsForm = document.getElementById("joinSheetForm");
-        const jsBtn = document.getElementById("btn-join-submit");
-        if(jsForm) jsForm.reset();
-        if(jsBtn) {
-            jsBtn.disabled = false;
-            jsBtn.innerHTML = `Join Sheet <i class="ph-bold ph-arrow-right"></i>`;
-        }
-    }
-}
-
-function copyShareLink() {
-    const input = document.getElementById("shareLinkInput");
-    input.select();
-    document.execCommand("copy");
-    
-    // Show feedback & auto-refresh
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = 'Copied!';
-    btn.classList.add('bg-green-600');
-    
-    setTimeout(() => {
-        closeModal("shareSheetModal");
-    }, 800);
-}
-
-function copySheetLink(button) {
-    const shareLink = button.dataset.shareLink;
-
-    if (!shareLink) {
-        console.error('Share link missing');
-        showToast('Share link not available', 'error');
-        return;
+        tbody.innerHTML = rows;
     }
 
-    copyToClipboard(shareLink);
-}
-
-function copyToClipboard(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text)
-            .then(() => showToast('Share link copied!', 'success'))
-            .catch(() => fallbackCopy(text));
-    } else {
-        fallbackCopy(text);
-    }
-}
-
-
-// === DOWNLOAD MENU TOGGLE ===
-function toggleDownloadMenu(event, sheetId) {
-    event.stopPropagation();
-
-    const menu = document.getElementById(`download-menu-${sheetId}`);
-
-    if (!menu) {
-        console.error(`Download menu not found for sheetId: ${sheetId}`);
-        return;
+    // === HTML ESCAPE for security ===
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
-    menu.classList.toggle('hidden');
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', function() {
-    document.querySelectorAll('[id^="download-menu-"]').forEach(m => m.classList.add('hidden'));
-});
-
-// === HANDLE DOWNLOAD CLICKS ===
-function handleDownload(event, sheetId, format) {
-    event.preventDefault();
-
-    const icon = document.getElementById(`download-icon-${sheetId}`);
-    const spinner = document.getElementById(`download-spinner-${sheetId}`);
-    const menu = document.getElementById(`download-menu-${sheetId}`);
-
-    // 1️⃣ Show spinner, hide icon
-    icon.classList.add('hidden');
-    spinner.classList.remove('hidden');
-
-    // 2️⃣ Trigger download
-    const downloadUrl = `/sheets/${sheetId}/download/?format=${format}`;
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = '';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // 3️⃣ Close dropdown
-    menu.classList.add('hidden');
-
-    // 4️⃣ Hide spinner & show success toast (after download starts)
-    setTimeout(() => {
-        spinner.classList.add('hidden');
-        icon.classList.remove('hidden');
-
-        showToast(
-            `Sheet downloaded successfully as ${format.toUpperCase()}`,
-            'success'
-        );
-    }, 800); // slight delay feels natural
-}
-
-
-
-// === DELETE SHEET ===
-async function confirmDeleteSheet(sheetId, sheetName) {
-    if (!confirm(`Are you sure you want to delete "${sheetName}"? This action cannot be undone.`)) {
-        return;
+    // === MODAL SPECIFIC ===
+    function initializeShareModal(data) {
+        document.getElementById("shareLinkInput").value = data.share_link;
+        document.getElementById("openSheetBtn").href = data.sheet_url;
     }
 
-    try {
-        const response = await fetch(`/sheets/${sheetId}/delete/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCSRFToken()
-            }
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            showToast('Sheet deleted successfully', 'success');
-            refreshCreatedSheetsTable();
-        } else {
-            showToast(data.error || 'Failed to delete sheet', 'error');
-        }
-    } catch (error) {
-        console.error('Delete failed:', error);
-        showToast('An error occurred', 'error');
-    }
-}
-
-
-function getCSRFToken() {
-    const name = 'csrftoken=';
-    const cookies = document.cookie.split(';');
-
-    for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name)) {
-            return cookie.substring(name.length);
-        }
-    }
-    return '';
-}
-
-
-
-// === TOAST NOTIFICATION ===
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
-        type === 'success' ? 'bg-green-600' : 'bg-red-600'
-    }`;
-    toast.textContent = message;
-    
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-
-// === FORM HANDLER ===
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Create Sheet Handler
-    const createForm = document.getElementById("createSheetForm");
-    if(createForm) {
-        createForm.addEventListener("submit", async function (e) {
-            e.preventDefault();
+    function resetModal(modalId) {
+        if (modalId === 'createSheetModal') {
+            const form = document.getElementById("createSheetForm");
             const btn = document.getElementById("btn-create-submit");
-            const originalContent = btn.innerHTML;
-
-            btn.disabled = true;
-            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> Creating...`;
-
-            const formData = new FormData(this);
-
-            try {
-                const response = await fetch("/create-sheet/", {
-                    method: "POST",
-                    headers: { "X-CSRFToken": getCSRFToken() },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    closeModal('createSheetModal');
-                    openModal('shareSheetModal', data);
-                } else {
-                    alert("Failed to create sheet. Please check your connection and try again.");
-                }
-            } catch (error) {
-                alert("Failed to create sheet. Please try again.");
-            } finally {
+            if (form) form.reset();
+            if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = originalContent;
+                btn.innerHTML = `<span>Create Sheet</span><i class="ph-bold ph-arrow-right"></i>`;
             }
-        });
-    }
-
-    // Join Sheet Handler (extracting token from pasted URL)
-    const joinForm = document.getElementById("joinSheetForm");
-    if(joinForm) {
-        joinForm.addEventListener("submit", function(e) {
-            e.preventDefault();
-            const urlInput = document.getElementById("joinSheetUrl").value.trim();
-            if(!urlInput) return;
-            
-            let token = urlInput;
-            if(token.includes('/join/')) {
-                const parts = token.split('/join/');
-                if(parts.length > 1) {
-                    token = parts[1].split('/')[0];
-                }
+        } else if (modalId === 'shareSheetModal') {
+            document.getElementById("shareLinkInput").value = "";
+        } else if (modalId === 'joinSheetModal') {
+            const jsForm = document.getElementById("joinSheetForm");
+            const jsBtn = document.getElementById("btn-join-submit");
+            if (jsForm) jsForm.reset();
+            if (jsBtn) {
+                jsBtn.disabled = false;
+                jsBtn.innerHTML = `Join Sheet <i class="ph-bold ph-arrow-right"></i>`;
             }
-            // Strip trailing/leading slashes just in case
-            token = token.replace(/^\/+|\/+$/g, '');
-            
-            const btn = document.getElementById("btn-join-submit");
-            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> Joining...`;
-            btn.disabled = true;
-            
-            // Redirect to the regular Join route
-            window.location.href = "/join/" + token + "/";
-        });
-    }
-});
-
-document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") {
-        const openModals = document.querySelectorAll('.modal-wrapper:not(.hidden)');
-        if (openModals.length > 0) {
-            closeModal(openModals[0].id);
         }
     }
-});
 
+    function copyShareLink() {
+        const input = document.getElementById("shareLinkInput");
+        input.select();
+        document.execCommand("copy");
 
+        // Show feedback & auto-refresh
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('bg-green-600');
 
-
-
-// --- State Management ---
-let currentSheetId = null;
-let currentData = { columns: [], rows: [] };
-let editingRowIndex = null; // null = create mode, number = edit mode
-
-let editingRowId = null;
-
-let lastTempId = null;
-const gridBody = document.getElementById("grid-body");
-const gridHeader = document.getElementById("grid-header-row");
-
-
-
-// --- 1. Modal Open/Close ---
-
-function openDataGrid(sheetId) {
-    currentSheetId = sheetId;
-    const modal = document.getElementById("dataGridModal");
-    const backdrop = document.getElementById("gridBackdrop");
-    const panel = document.getElementById("gridPanel");
-
-    modal.classList.remove("hidden");
-    
-    // Animate In
-    setTimeout(() => {
-        backdrop.classList.remove("opacity-0");
-        panel.classList.remove("opacity-0", "scale-95");
-        panel.classList.add("opacity-100", "scale-100");
-    }, 10);
-
-    fetchGridData();
-}
-
-function closeDataGrid() {
-    const modal = document.getElementById("dataGridModal");
-    const backdrop = document.getElementById("gridBackdrop");
-    const panel = document.getElementById("gridPanel");
-
-    // Animate Out
-    backdrop.classList.add("opacity-0");
-    panel.classList.remove("opacity-100", "scale-100");
-    panel.classList.add("opacity-0", "scale-95");
-
-    setTimeout(() => {
-        modal.classList.add("hidden");
-        closeDrawer(); // Ensure drawer is closed
-        document.getElementById("grid-body").innerHTML = ""; // Clean up
-    }, 300);
-}
-
-// --- 2. Data Fetching ---
-    
-function fetchGridData() {
-    const loader = document.getElementById("grid-loader");
-    const emptyState = document.getElementById("grid-empty");
-
-    loader.classList.remove("hidden");
-    emptyState.classList.add("hidden");
-
-    fetch(`/api/sheets/${currentSheetId}/grid/`)
-        .then(res => {
-            if (!res.ok) throw new Error("Failed to fetch grid data");
-            return res.json();
-        })
-        .then(data => {
-            // 🔥 State is the ONLY thing updated here
-            currentData = {
-                title: data.title,
-                columns: data.columns || [],
-                rows: data.rows || []
-            };
-
-            // Title
-            document.getElementById("grid-title").innerText =
-                currentData.title || "Untitled Sheet";
-
-            // 🔁 Single render pipeline
-            renderTable();
-        })
-        .catch(err => {
-            console.error(err);
-            showToast("Failed to load records", "error");
-        })
-        .finally(() => {
-            loader.classList.add("hidden");
-        });
-}
-
-
-
-// --- 3. Render Table Dynamically ---
-
-function renderTable() {
-    const theadRow = document.getElementById("grid-header-row");
-    const tbody = document.getElementById("grid-body");
-    const emptyState = document.getElementById("grid-empty");
-
-    theadRow.innerHTML = "";
-    tbody.innerHTML = "";
-
-    if (!currentData.rows || currentData.rows.length === 0) {
-        emptyState.classList.remove("hidden");
-        return;
+        setTimeout(() => {
+            closeModal("shareSheetModal");
+        }, 800);
     }
 
-    emptyState.classList.add("hidden");
+    function copySheetLink(button) {
+        const shareLink = button.dataset.shareLink;
 
-    // ---------- HEADERS ----------
-    currentData.columns.forEach(col => {
-        const th = document.createElement("th");
-        th.className =
-            "px-6 py-3 text-xs font-semibold text-muted uppercase tracking-wider " +
-            "bg-gray-50/80 sticky top-0 whitespace-nowrap border-b border-border";
-        th.innerText = col;
-        theadRow.appendChild(th);
+        if (!shareLink) {
+            console.error('Share link missing');
+            showToast('Share link not available', 'error');
+            return;
+        }
+
+        copyToClipboard(shareLink);
+    }
+
+    function copyToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text)
+                .then(() => showToast('Share link copied!', 'success'))
+                .catch(() => fallbackCopy(text));
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+
+    // === DOWNLOAD MENU TOGGLE ===
+    function toggleDownloadMenu(event, sheetId) {
+        event.stopPropagation();
+
+        const menu = document.getElementById(`download-menu-${sheetId}`);
+
+        if (!menu) {
+            console.error(`Download menu not found for sheetId: ${sheetId}`);
+            return;
+        }
+
+        menu.classList.toggle('hidden');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function () {
+        document.querySelectorAll('[id^="download-menu-"]').forEach(m => m.classList.add('hidden'));
     });
 
-    const thAction = document.createElement("th");
-    thAction.className =
-        "px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider " +
-        "text-right sticky top-0 bg-gray-50/80 border-b border-border w-[140px]";
-    thAction.innerText = "Actions";
-    theadRow.appendChild(thAction);
+    // === HANDLE DOWNLOAD CLICKS ===
+    function handleDownload(event, sheetId, format) {
+        event.preventDefault();
 
-    // ---------- ROWS ----------
-    currentData.rows.forEach((row, index) => {
-        const tr = document.createElement("tr");
-        tr.className =
-            "group hover:bg-gray-50/70 transition-colors";
+        const icon = document.getElementById(`download-icon-${sheetId}`);
+        const spinner = document.getElementById(`download-spinner-${sheetId}`);
+        const menu = document.getElementById(`download-menu-${sheetId}`);
 
+        // 1️⃣ Show spinner, hide icon
+        icon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+
+        // 2️⃣ Trigger download
+        const downloadUrl = `/sheets/${sheetId}/download/?format=${format}`;
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // 3️⃣ Close dropdown
+        menu.classList.add('hidden');
+
+        // 4️⃣ Hide spinner & show success toast (after download starts)
+        setTimeout(() => {
+            spinner.classList.add('hidden');
+            icon.classList.remove('hidden');
+
+            showToast(
+                `Sheet downloaded successfully as ${format.toUpperCase()}`,
+                'success'
+            );
+        }, 800); // slight delay feels natural
+    }
+
+
+
+    // === DELETE SHEET ===
+    async function confirmDeleteSheet(sheetId, sheetName) {
+        if (!confirm(`Are you sure you want to delete "${sheetName}"? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/sheets/${sheetId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                showToast('Sheet deleted successfully', 'success');
+                refreshCreatedSheetsTable();
+            } else {
+                showToast(data.error || 'Failed to delete sheet', 'error');
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+            showToast('An error occurred', 'error');
+        }
+    }
+
+
+    function getCSRFToken() {
+        const name = 'csrftoken=';
+        const cookies = document.cookie.split(';');
+
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name)) {
+                return cookie.substring(name.length);
+            }
+        }
+        return '';
+    }
+
+
+
+    // === TOAST NOTIFICATION ===
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'
+            }`;
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+
+    // === FORM HANDLER ===
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Create Sheet Handler
+        const createForm = document.getElementById("createSheetForm");
+        if (createForm) {
+            createForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                const btn = document.getElementById("btn-create-submit");
+                const originalContent = btn.innerHTML;
+
+                btn.disabled = true;
+                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> Creating...`;
+
+                const formData = new FormData(this);
+
+                try {
+                    const response = await fetch("/create-sheet/", {
+                        method: "POST",
+                        headers: { "X-CSRFToken": getCSRFToken() },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        closeModal('createSheetModal');
+                        openModal('shareSheetModal', data);
+                    } else {
+                        alert("Failed to create sheet. Please check your connection and try again.");
+                    }
+                } catch (error) {
+                    alert("Failed to create sheet. Please try again.");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            });
+        }
+
+        // Join Sheet Handler (extracting token from pasted URL)
+        const joinForm = document.getElementById("joinSheetForm");
+        if (joinForm) {
+            joinForm.addEventListener("submit", function (e) {
+                e.preventDefault();
+                const urlInput = document.getElementById("joinSheetUrl").value.trim();
+                if (!urlInput) return;
+
+                let token = urlInput;
+                if (token.includes('/join/')) {
+                    const parts = token.split('/join/');
+                    if (parts.length > 1) {
+                        token = parts[1].split('/')[0];
+                    }
+                }
+                // Strip trailing/leading slashes just in case
+                token = token.replace(/^\/+|\/+$/g, '');
+
+                const btn = document.getElementById("btn-join-submit");
+                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> Joining...`;
+                btn.disabled = true;
+
+                // Redirect to the regular Join route
+                window.location.href = "/join/" + token + "/";
+            });
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === "Escape") {
+            const openModals = document.querySelectorAll('.modal-wrapper:not(.hidden)');
+            if (openModals.length > 0) {
+                closeModal(openModals[0].id);
+            }
+        }
+    });
+
+
+
+
+
+    // --- State Management ---
+    let currentSheetId = null;
+    let currentData = { columns: [], rows: [] };
+    let editingRowIndex = null; // null = create mode, number = edit mode
+
+    let editingRowId = null;
+
+    let lastTempId = null;
+    const gridBody = document.getElementById("grid-body");
+    const gridHeader = document.getElementById("grid-header-row");
+
+
+
+    // --- 1. Modal Open/Close ---
+
+    function openDataGrid(sheetId) {
+        currentSheetId = sheetId;
+        const modal = document.getElementById("dataGridModal");
+        const backdrop = document.getElementById("gridBackdrop");
+        const panel = document.getElementById("gridPanel");
+
+        modal.classList.remove("hidden");
+
+        // Animate In
+        setTimeout(() => {
+            backdrop.classList.remove("opacity-0");
+            panel.classList.remove("opacity-0", "scale-95");
+            panel.classList.add("opacity-100", "scale-100");
+        }, 10);
+
+        fetchGridData();
+    }
+
+    function closeDataGrid() {
+        const modal = document.getElementById("dataGridModal");
+        const backdrop = document.getElementById("gridBackdrop");
+        const panel = document.getElementById("gridPanel");
+
+        // Animate Out
+        backdrop.classList.add("opacity-0");
+        panel.classList.remove("opacity-100", "scale-100");
+        panel.classList.add("opacity-0", "scale-95");
+
+        setTimeout(() => {
+            modal.classList.add("hidden");
+            closeDrawer(); // Ensure drawer is closed
+            document.getElementById("grid-body").innerHTML = ""; // Clean up
+        }, 300);
+    }
+
+    // --- 2. Data Fetching ---
+
+    function fetchGridData() {
+        const loader = document.getElementById("grid-loader");
+        const emptyState = document.getElementById("grid-empty");
+
+        loader.classList.remove("hidden");
+        emptyState.classList.add("hidden");
+
+        fetch(`/api/sheets/${currentSheetId}/grid/`)
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch grid data");
+                return res.json();
+            })
+            .then(data => {
+                // 🔥 State is the ONLY thing updated here
+                currentData = {
+                    title: data.title,
+                    columns: data.columns || [],
+                    rows: data.rows || []
+                };
+
+                // Title
+                document.getElementById("grid-title").innerText =
+                    currentData.title || "Untitled Sheet";
+
+                // 🔁 Single render pipeline
+                renderTable();
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Failed to load records", "error");
+            })
+            .finally(() => {
+                loader.classList.add("hidden");
+            });
+    }
+
+
+
+    // --- 3. Render Table Dynamically ---
+
+    function renderTable() {
+        const theadRow = document.getElementById("grid-header-row");
+        const tbody = document.getElementById("grid-body");
+        const emptyState = document.getElementById("grid-empty");
+
+        theadRow.innerHTML = "";
+        tbody.innerHTML = "";
+
+        if (!currentData.rows || currentData.rows.length === 0) {
+            emptyState.classList.remove("hidden");
+            return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        // ---------- HEADERS ----------
         currentData.columns.forEach(col => {
-            const td = document.createElement("td");
-            td.className =
-                "px-6 py-4 text-sm text-gray-700 whitespace-nowrap " +
-                "border-b border-border";
-            td.innerText = row.data?.[col] ?? "—";
-            tr.appendChild(td);
+            const th = document.createElement("th");
+            th.className =
+                "px-6 py-3 text-xs font-semibold text-muted uppercase tracking-wider " +
+                "bg-gray-50/80 sticky top-0 whitespace-nowrap border-b border-border";
+            th.innerText = col;
+            theadRow.appendChild(th);
         });
 
-        const tdAction = document.createElement("td");
-        tdAction.className =
-            "px-4 py-2 text-right border-b border-border w-[140px]";
+        const thAction = document.createElement("th");
+        thAction.className =
+            "px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wider " +
+            "text-right sticky top-0 bg-gray-50/80 border-b border-border w-[140px]";
+        thAction.innerText = "Actions";
+        theadRow.appendChild(thAction);
 
-        tdAction.innerHTML = `
+        // ---------- ROWS ----------
+        currentData.rows.forEach((row, index) => {
+            const tr = document.createElement("tr");
+            tr.className =
+                "group hover:bg-gray-50/70 transition-colors";
+
+            currentData.columns.forEach(col => {
+                const td = document.createElement("td");
+                td.className =
+                    "px-6 py-4 text-sm text-gray-700 whitespace-nowrap " +
+                    "border-b border-border";
+                td.innerText = row.data?.[col] ?? "—";
+                tr.appendChild(td);
+            });
+
+            const tdAction = document.createElement("td");
+            tdAction.className =
+                "px-4 py-2 text-right border-b border-border w-[140px]";
+
+            tdAction.innerHTML = `
             <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                     onclick="openDrawer('edit', ${index})"
@@ -1621,179 +1791,179 @@ function renderTable() {
             </div>
         `;
 
-        tr.appendChild(tdAction);
-        tbody.appendChild(tr);
-    });
-}
-
-
-// --- 4. Form Drawer Logic ---
-
-function openDrawer(mode, rowIndex = null) {
-    const drawer = document.getElementById("formDrawer");
-    const formContainer = document.getElementById("dynamicForm");
-    const title = document.getElementById("drawer-title");
-
-    formContainer.innerHTML = "";
-
-    editingRowIndex = rowIndex;
-    editingRowId = null;
-
-    if (mode === "edit" && rowIndex !== null) {
-        title.innerText = "Edit Record";
-
-        const row = currentData.rows[rowIndex];
-        editingRowId = row.id;
-
-        currentData.columns.forEach(col => {
-            createInput(formContainer, col, row.data?.[col] ?? "");
-        });
-    } else {
-        title.innerText = "Add New Record";
-        currentData.columns.forEach(col => {
-            createInput(formContainer, col, "");
+            tr.appendChild(tdAction);
+            tbody.appendChild(tr);
         });
     }
 
-    drawer.classList.remove("translate-x-full");
-}
+
+    // --- 4. Form Drawer Logic ---
+
+    function openDrawer(mode, rowIndex = null) {
+        const drawer = document.getElementById("formDrawer");
+        const formContainer = document.getElementById("dynamicForm");
+        const title = document.getElementById("drawer-title");
+
+        formContainer.innerHTML = "";
+
+        editingRowIndex = rowIndex;
+        editingRowId = null;
+
+        if (mode === "edit" && rowIndex !== null) {
+            title.innerText = "Edit Record";
+
+            const row = currentData.rows[rowIndex];
+            editingRowId = row.id;
+
+            currentData.columns.forEach(col => {
+                createInput(formContainer, col, row.data?.[col] ?? "");
+            });
+        } else {
+            title.innerText = "Add New Record";
+            currentData.columns.forEach(col => {
+                createInput(formContainer, col, "");
+            });
+        }
+
+        drawer.classList.remove("translate-x-full");
+    }
 
 
-function createInput(container, label, value) {
-    const div = document.createElement("div");
-    div.innerHTML = `
+    function createInput(container, label, value) {
+        const div = document.createElement("div");
+        div.innerHTML = `
         <label class="block text-sm font-medium text-gray-700 mb-1.5">${label}</label>
         <input type="text" name="${label}" value="${value}" 
             class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all placeholder-gray-400"
             placeholder="Enter ${label}...">
     `;
-    container.appendChild(div);
-}
-
-function closeDrawer() {
-    document.getElementById("formDrawer").classList.add("translate-x-full");
-    editingRowIndex = null;
-}
-
-// --- 5. Submit Logic ---
-async function submitForm() {
-    const btn = document.getElementById("btn-save");
-
-    const payload = {};
-    document.querySelectorAll("#dynamicForm input").forEach(input => {
-        payload[input.name] = input.value;
-    });
-
-    const previousRows = JSON.parse(JSON.stringify(currentData.rows));
-
-    closeDrawer();
-
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Saving...`;
-
-    let tempId = null;
-    const isEdit = Boolean(editingRowId);
-
-    try {
-        // --------------------
-        // OPTIMISTIC CREATE
-        // --------------------
-        if (!isEdit) {
-            tempId = `temp-${Date.now()}`;
-
-            currentData.rows.push({
-                id: tempId,
-                data: payload,
-                __temp: true
-            });
-
-            renderTable();
-        }
-
-        // --------------------
-        // API CALL
-        // --------------------
-        const res = await fetch(
-            editingRowId
-                ? `/api/sheets/${currentSheetId}/rows/${editingRowId}/`
-                : `/api/sheets/${currentSheetId}/rows/`,
-            {
-                method: editingRowId ? "PUT" : "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCSRFToken()
-                },
-                body: JSON.stringify(payload)
-            }
-        );
-
-
-        if (res.status === 409) {
-            showToast("Row is syncing… please retry in a moment ⏳", "warning");
-            return;
-        }
-
-        if (!res.ok) throw new Error("Save failed");
-
-        const savedRow = await res.json();
-
-        // --------------------
-        // UPDATE STATE
-        // --------------------
-        if (isEdit) {
-            const index = currentData.rows.findIndex(r => r.id === editingRowId);
-            if (index !== -1) currentData.rows[index] = savedRow;
-        } else {
-            const index = currentData.rows.findIndex(r => r.id === tempId);
-            if (index !== -1) currentData.rows[index] = savedRow;
-        }
-
-        renderTable();
-        showToast(isEdit ? "Updated successfully ✨" : "Saved instantly ⚡", "success");
-
-    } catch (err) {
-        console.error(err);
-        currentData.rows = previousRows;
-        renderTable();
-        showToast("Save failed — reverted", "error");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-        editingRowIndex = null;
-        editingRowId = null;
+        container.appendChild(div);
     }
-}
 
+    function closeDrawer() {
+        document.getElementById("formDrawer").classList.add("translate-x-full");
+        editingRowIndex = null;
+    }
 
-async function deleteRow(rowId, rowIndex) {
-    if (!confirm("Delete this row?")) return;
+    // --- 5. Submit Logic ---
+    async function submitForm() {
+        const btn = document.getElementById("btn-save");
 
-    const previousRows = JSON.parse(JSON.stringify(currentData.rows));
-
-    // optimistic remove
-    currentData.rows.splice(rowIndex, 1);
-    renderTable();
-
-    try {
-        const res = await fetch(`/api/rows/${rowId}/`, {
-            method: "DELETE",
-            headers: {
-                "X-CSRFToken": getCSRFToken()
-            }
+        const payload = {};
+        document.querySelectorAll("#dynamicForm input").forEach(input => {
+            payload[input.name] = input.value;
         });
 
-        if (!res.ok) throw new Error("Delete failed");
+        const previousRows = JSON.parse(JSON.stringify(currentData.rows));
 
-        showToast("Row deleted 🗑️", "success");
+        closeDrawer();
 
-    } catch (err) {
-        console.error(err);
-        currentData.rows = previousRows;
-        renderTable();
-        showToast("Delete failed — reverted", "error");
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Saving...`;
+
+        let tempId = null;
+        const isEdit = Boolean(editingRowId);
+
+        try {
+            // --------------------
+            // OPTIMISTIC CREATE
+            // --------------------
+            if (!isEdit) {
+                tempId = `temp-${Date.now()}`;
+
+                currentData.rows.push({
+                    id: tempId,
+                    data: payload,
+                    __temp: true
+                });
+
+                renderTable();
+            }
+
+            // --------------------
+            // API CALL
+            // --------------------
+            const res = await fetch(
+                editingRowId
+                    ? `/api/sheets/${currentSheetId}/rows/${editingRowId}/`
+                    : `/api/sheets/${currentSheetId}/rows/`,
+                {
+                    method: editingRowId ? "PUT" : "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCSRFToken()
+                    },
+                    body: JSON.stringify(payload)
+                }
+            );
+
+
+            if (res.status === 409) {
+                showToast("Row is syncing… please retry in a moment ⏳", "warning");
+                return;
+            }
+
+            if (!res.ok) throw new Error("Save failed");
+
+            const savedRow = await res.json();
+
+            // --------------------
+            // UPDATE STATE
+            // --------------------
+            if (isEdit) {
+                const index = currentData.rows.findIndex(r => r.id === editingRowId);
+                if (index !== -1) currentData.rows[index] = savedRow;
+            } else {
+                const index = currentData.rows.findIndex(r => r.id === tempId);
+                if (index !== -1) currentData.rows[index] = savedRow;
+            }
+
+            renderTable();
+            showToast(isEdit ? "Updated successfully ✨" : "Saved instantly ⚡", "success");
+
+        } catch (err) {
+            console.error(err);
+            currentData.rows = previousRows;
+            renderTable();
+            showToast("Save failed — reverted", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            editingRowIndex = null;
+            editingRowId = null;
+        }
     }
-}
+
+
+    async function deleteRow(rowId, rowIndex) {
+        if (!confirm("Delete this row?")) return;
+
+        const previousRows = JSON.parse(JSON.stringify(currentData.rows));
+
+        // optimistic remove
+        currentData.rows.splice(rowIndex, 1);
+        renderTable();
+
+        try {
+            const res = await fetch(`/api/rows/${rowId}/`, {
+                method: "DELETE",
+                headers: {
+                    "X-CSRFToken": getCSRFToken()
+                }
+            });
+
+            if (!res.ok) throw new Error("Delete failed");
+
+            showToast("Row deleted 🗑️", "success");
+
+        } catch (err) {
+            console.error(err);
+            currentData.rows = previousRows;
+            renderTable();
+            showToast("Delete failed — reverted", "error");
+        }
+    }
 
 
 </script>
