@@ -116,8 +116,7 @@
 
             <div class="flex items-center gap-5 shrink-0">
                 <div class="flex items-center gap-3 border-r border-gray-200 pr-5">
-                    <span class="text-[13px] font-semibold text-gray-700">{{ user.first_name|default:user.username }} {{
-                        user.last_name|default:"" }}</span>
+                    <span class="text-[13px] font-semibold text-gray-700">{{ user.first_name|default:user.username }} {{                         user.last_name|default:"" }}</span>
                     <img src="{% if google_profile_pic %}{{ google_profile_pic }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=6366f1&color=fff&size=128{% endif %}"
                         class="w-8 h-8 rounded-full border border-gray-200 bg-white">
                 </div>
@@ -206,8 +205,7 @@
                         <i class="ph-fill ph-users-three text-xl"></i>
                     </div>
                     <p class="text-[13px] text-gray-500 font-medium relative z-10 mt-auto">Collaborators</p>
-                    <h3 class="text-3xl font-bold text-gray-900 mt-1 relative z-10">{{ joined_sheets|length|default:"0"
-                        }}</h3>
+                    <h3 class="text-3xl font-bold text-gray-900 mt-1 relative z-10">{{ joined_sheets|length|default:"0"                         }}</h3>
                     <p class="text-[11px] text-gray-400 font-medium mt-1 relative z-10">Active Members</p>
                 </div>
 
@@ -223,8 +221,7 @@
                         <i class="ph-fill ph-lightning text-xl"></i>
                     </div>
                     <p class="text-[13px] text-gray-500 font-medium relative z-10 mt-auto">Last Activity</p>
-                    <h3 class="text-[26px] font-bold text-gray-900 mt-1 leading-tight tracking-tight relative z-10">{%
-                        if last_activity %}{{ last_activity|timesince }} ago{% else %}Never{% endif %}</h3>
+                    <h3 class="text-[26px] font-bold text-gray-900 mt-1 leading-tight tracking-tight relative z-10">{%                         if last_activity %}{{ last_activity|timesince }} ago{% else %}Never{% endif %}</h3>
                     <p class="text-[11px] text-gray-400 font-medium mt-1 relative z-10">Recent Updates</p>
                 </div>
             </div>
@@ -317,10 +314,8 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ sheet.created_at|date:"M d,
-                                            Y" }}</td>
-                                        <td class="px-6 py-4 text-center font-bold text-gray-700">{{
-                                            sheet.response_count }}</td>
+                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ sheet.created_at|date:"M d,                                             Y" }}</td>
+                                        <td class="px-6 py-4 text-center font-bold text-gray-700">{{                                             sheet.response_count }}</td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center">
                                                 {% with collabs=sheet.active_members|dictsortreversed:"role" %}
@@ -330,16 +325,14 @@
                                                     {% if member.role == "collaborator" %}
                                                     <div class="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-blue-200 flex items-center justify-center overflow-hidden"
                                                         title="{{ member.user.username }} (Collaborator)">
-                                                        <span class="text-[10px] font-bold text-blue-700">{{
-                                                            member.user.username|slice:":2"|upper }}</span>
+                                                        <span class="text-[10px] font-bold text-blue-700">{{                                                             member.user.username|slice:":2"|upper }}</span>
                                                     </div>
                                                     {% endif %}
                                                     {% endfor %}
                                                 </div>
                                                 {% with collab_count=sheet.active_members|length %}
                                                 {% if collab_count > 3 %}<span
-                                                    class="text-xs font-semibold text-gray-500 ml-2">+{{
-                                                    collab_count|add:"-3" }}</span>{% endif %}
+                                                    class="text-xs font-semibold text-gray-500 ml-2">+{{                                                     collab_count|add:"-3" }}</span>{% endif %}
                                                 {% endwith %}
                                                 {% else %}
                                                 <span
@@ -407,8 +400,7 @@
                                     </tr>
                                     {% endfor %}
 
-                                    {% comment %}Phase 5: Collaborated sheets appear in Created tab with badge{%
-                                    endcomment %}
+                                    {% comment %}Phase 5: Collaborated sheets appear in Created tab with badge{%                                     endcomment %}
                                     {% for member in collaborating_sheets %}
                                     <tr class="hover:bg-gray-50/70 transition-colors group">
                                         <td class="px-6 py-4">
@@ -426,8 +418,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-600 font-medium">{{
-                                            member.sheet.created_at|date:"M d, Y" }}</td>
+                                        <td class="px-6 py-4 text-gray-600 font-medium">{{                                             member.sheet.created_at|date:"M d, Y" }}</td>
                                         <td class="px-6 py-4 text-center font-bold text-gray-700">
                                             <span class="text-gray-400 text-xs">—</span>
                                         </td>
@@ -436,8 +427,7 @@
                                                 <div
                                                     class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold border border-gray-200">
                                                     {{ member.sheet.owner.username|slice:":1"|upper }}</div>
-                                                <span class="text-[12px] text-gray-700 font-semibold">{{
-                                                    member.sheet.owner.username }}</span>
+                                                <span class="text-[12px] text-gray-700 font-semibold">{{                                                     member.sheet.owner.username }}</span>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-center">
@@ -540,13 +530,11 @@
                                                     class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold border border-gray-200">
                                                     {{ member.sheet.owner.username|slice:":1"|upper }}</div>
                                                 <div class="flex flex-col">
-                                                    <span class="font-semibold text-gray-800">{{
-                                                        member.sheet.owner.username }}</span>
+                                                    <span class="font-semibold text-gray-800">{{                                                         member.sheet.owner.username }}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ member.joined_at|date:"M d,
-                                            Y" }}</td>
+                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ member.joined_at|date:"M d,                                             Y" }}</td>
                                         <td class="px-6 py-4 text-right">
                                             <button onclick="openDataGrid('{{ member.sheet.id }}')"
                                                 class="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm text-xs font-semibold">
@@ -600,8 +588,7 @@
 
                             <div class="flex-1 min-w-0">
                                 <p class="text-[12.5px] text-gray-600 leading-snug">
-                                    <span class="font-bold text-gray-900">{{
-                                        log.user.first_name|default:log.user.username }}</span>
+                                    <span class="font-bold text-gray-900">{{                                         log.user.first_name|default:log.user.username }}</span>
                                     {% if log.action == "sheet_created" %}created sheet{% endif %}
                                     {% if log.action == "row_added" %}added a row to{% endif %}
                                     {% if log.action == "row_updated" %}updated a row in{% endif %}
@@ -616,8 +603,7 @@
                                         <i class="ph-fill ph-table text-[9px]"></i>
                                         {{ log.sheet.name|truncatechars:20 }}
                                     </span>
-                                    <span class="text-[10px] font-medium text-gray-400 shrink-0 ml-1">{{
-                                        log.created_at|timesince|slice:":8" }} ago</span>
+                                    <span class="text-[10px] font-medium text-gray-400 shrink-0 ml-1">{{                                         log.created_at|timesince|slice:":8" }} ago</span>
                                 </div>
                                 {% else %}
                                 <p class="text-[10px] text-gray-400 mt-0.5">{{ log.created_at|timesince|slice:":8" }}
