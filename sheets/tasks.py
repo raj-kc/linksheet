@@ -145,41 +145,151 @@ def _get_sheet_meta(service, spreadsheet_id):
     return sorted(meta["sheets"], key=lambda s: s["properties"]["index"])
 
 
+def _ensure_sheet_tab(service, sheet, tab_title):
+    """
+    Ensure a sheet tab with the given title exists. If not, create it
+    and add the headers from sheet.columns. Returns (sheet_id, was_created).
+    """
+    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+    for s in sheets:
+        if s["properties"]["title"] == tab_title:
+            return s["properties"]["sheetId"], False
+
+    # Not found, create it
+    req = {
+        "requests": [
+            {
+                "addSheet": {
+                    "properties": {
+                        "title": tab_title,
+                    }
+                }
+            }
+        ]
+    }
+    res = service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet.google_sheet_id,
+        body=req
+    ).execute()
+    
+    new_sheet_id = res["replies"][0]["addSheet"]["properties"]["sheetId"]
+    
+    # Add headers to the new tab
+    if sheet.columns:
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet.google_sheet_id,
+            range=f"'{tab_title}'!A1",
+            valueInputOption="RAW",
+            body={"values": [sheet.columns]}
+        ).execute()
+        
+    return new_sheet_id, True
+
+
+def _get_target_tabs(sheet, row_data):
+    """
+    Determine which tabs this row should live in based on sync_config.
+    Returns list of strings (tab names).
+    """
+    tabs = []
+    config = sheet.sync_config or {}
+    
+    # 1. Master Tab ("All Details")
+    # If not configured, we assume first tab is the default master.
+    keep_all = config.get("keep_all", True)
+    
+    # 2. Category Tab
+    group_col = config.get("grouping_column")
+    category_tab = None
+    if group_col and group_col in row_data:
+        val = row_data[group_col]
+        # Handle date interval grouping
+        interval = config.get("grouping_interval")
+        is_date = False
+        # Find column type to check if it's date
+        for c in sheet.get_column_configs():
+            if c.get("column_name") == group_col or c.get("name") == group_col:
+                if c.get("column_type") == "date" or c.get("type") == "date":
+                    is_date = True
+                break
+        
+        if val:
+            if is_date and interval:
+                try:
+                    from datetime import datetime
+                    d = datetime.fromisoformat(str(val))
+                    if interval == "yearly": category_tab = d.strftime("%Y")
+                    elif interval == "monthly": category_tab = d.strftime("%b %Y")
+                    elif interval == "daily": category_tab = d.strftime("%Y-%m-%d")
+                    elif interval == "weekly":
+                        week = d.isocalendar()[1]
+                        category_tab = f"Week {week}, {d.year}"
+                except:
+                    category_tab = str(val)
+            else:
+                category_tab = str(val)
+
+    # Resolve first tab title (Google Sheet default is usually 'Sheet1' or the sheet name)
+    # We'll use the literal first tab if no master name is set.
+    master_tab_name = "All Details"
+    
+    if keep_all:
+        tabs.append(master_tab_name)
+    
+    if category_tab and category_tab != master_tab_name:
+        tabs.append(category_tab)
+        
+    if not tabs:
+        # Fallback to the first tab in the spreadsheet
+        return [] # empty list = use default first tab (indexed 0)
+        
+    return tabs
+
+
 def _handle_create(service, sheet, event):
     """
-    Append a new row to Google Sheets and record the assigned row number.
+    Append a new row to Google Sheets (one or more tabs) and record row numbers.
     """
-    if not event.row:
+    row = event.row
+    if not row:
         logger.warning("Create event %s has no associated row — skipping.", event.id)
         event.processed = True
         event.save(update_fields=["processed"])
         return
 
+    target_tabs = _get_target_tabs(sheet, event.payload)
+    
+    if not target_tabs:
+        # Default legacy behavior: append to the first tab
+        sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+        target_tabs = [sheets[0]["properties"]["title"]]
+
+    row_map = row.tab_row_numbers or {}
     values = [[event.payload.get(col, "") for col in sheet.columns]]
 
-    # PHASE 1: Fetch the first sheet's literal title for the range.
-    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
-    sheet_title = sheets[0]["properties"]["title"]
+    for tab_name in target_tabs:
+        _ensure_sheet_tab(service, sheet, tab_name)
+        
+        response = service.spreadsheets().values().append(
+            spreadsheetId=sheet.google_sheet_id,
+            range=f"'{tab_name}'!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": values}
+        ).execute()
 
-    response = service.spreadsheets().values().append(
-        spreadsheetId=sheet.google_sheet_id,
-        range=f"'{sheet_title}'!A1",
-        valueInputOption="RAW",
-        insertDataOption="INSERT_ROWS",
-        body={"values": values}
-    ).execute()
+        updated_range = response["updates"]["updatedRange"]
+        match = re.search(r"!A(\d+)", updated_range)
+        if match:
+            # We store the row number in the map
+            row_map[tab_name] = int(match.group(1))
 
-    updated_range = response["updates"]["updatedRange"]
-
-    # updatedRange looks like "Sheet1!A7:C7". Use regex to reliably extract
-    # the row number — simple split fails when sheet names contain "!A".
-    match = re.search(r"!A(\d+)", updated_range)
-    if not match:
-        raise ValueError(f"Cannot parse row number from updatedRange: {updated_range!r}")
-    row_number = int(match.group(1))
-
-    event.row.sheet_row_number = row_number
-    event.row.save(update_fields=["sheet_row_number"])
+    # Backward compatibility: use the first entry in row_map for sheet_row_number
+    if row_map:
+        first_num = list(row_map.values())[0]
+        row.sheet_row_number = first_num
+        row.tab_row_numbers = row_map
+        row.save(update_fields=["sheet_row_number", "tab_row_numbers"])
 
 
 def _index_to_col(index: int) -> str:
@@ -191,40 +301,98 @@ def _index_to_col(index: int) -> str:
 
 
 def _handle_update(service, sheet, event):
-    """Overwrite an existing row in Google Sheets by its row number."""
+    """Overwrite an existing row in all relevant tabs."""
     row = event.row
-
-    if not row or not row.sheet_row_number:
-        raise ValueError("Row has no Google Sheet row number — cannot update.")
+    if not row or not row.tab_row_numbers:
+        # Fallback for old rows that only have sheet_row_number
+        if row and row.sheet_row_number:
+            sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+            tab_name = sheets[0]["properties"]["title"]
+            row.tab_row_numbers = {tab_name: row.sheet_row_number}
+        else:
+            raise ValueError("Row has no Google Sheet row mapping — cannot update.")
 
     values = [[event.payload.get(col, "") for col in sheet.columns]]
     num_cols = max(1, len(sheet.columns))
     end_col = _index_to_col(num_cols - 1)
 
-    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
-    sheet_title = sheets[0]["properties"]["title"]
+    # Determine current desired tabs
+    current_tabs = _get_target_tabs(sheet, event.payload)
+    if not current_tabs:
+        sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+        current_tabs = [sheets[0]["properties"]["title"]]
 
-    range_str = f"'{sheet_title}'!A{row.sheet_row_number}:{end_col}{row.sheet_row_number}"
+    old_row_map = row.tab_row_numbers
+    new_row_map = {}
 
-    service.spreadsheets().values().update(
-        spreadsheetId=sheet.google_sheet_id,
-        range=range_str,
-        valueInputOption="RAW",
-        body={"values": values}
-    ).execute()
+    # Logic:
+    # 1. Update in tabs that were already there
+    # 2. Append in tabs that are now new (if the categorized value changed)
+    # 3. Delete in tabs that are no longer applicable (if the categorized value changed)
+    
+    # Simple strategy: Sync everywhere we can
+    for tab_name, num in old_row_map.items():
+        if tab_name in current_tabs:
+            # Still in this tab - Update
+            range_str = f"'{tab_name}'!A{num}:{end_col}{num}"
+            service.spreadsheets().values().update(
+                spreadsheetId=sheet.google_sheet_id,
+                range=range_str,
+                valueInputOption="RAW",
+                body={"values": values}
+            ).execute()
+            new_row_map[tab_name] = num
+        else:
+            # Category changed! Delete from this tab in Google Sheets
+            # (Requires re-indexing later rows in THIS specific tab)
+            _delete_and_shift(service, sheet, tab_name, num)
+
+    # Any new tabs?
+    for tab_name in current_tabs:
+        if tab_name not in old_row_map:
+            # Row moved to this tab! Append it.
+            _ensure_sheet_tab(service, sheet, tab_name)
+            response = service.spreadsheets().values().append(
+                spreadsheetId=sheet.google_sheet_id,
+                range=f"'{tab_name}'!A1",
+                valueInputOption="RAW",
+                insertDataOption="INSERT_ROWS",
+                body={"values": values}
+            ).execute()
+            match = re.search(r"!A(\d+)", response["updates"]["updatedRange"])
+            if match:
+                new_row_map[tab_name] = int(match.group(1))
+
+    row.tab_row_numbers = new_row_map
+    row.sheet_row_number = list(new_row_map.values())[0] if new_row_map else None
+    row.save(update_fields=["tab_row_numbers", "sheet_row_number"])
 
 
 def _handle_delete(service, sheet, event):
-    """
-    Delete a row from Google Sheets by row number and renumber all subsequent
-    rows in the DB to keep them in sync.
-    """
-    if not event.row_number:
-        raise ValueError("Missing row_number for delete event.")
+    """Delete a row from all mapped tabs and shift row numbers."""
+    row_map = event.row.tab_row_numbers if event.row else {}
+    if not row_map and event.row_number:
+        # Fallback for old system
+        sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+        row_map = {sheets[0]["properties"]["title"]: event.row_number}
+    
+    if not row_map:
+        raise ValueError("Missing row mapping for delete event.")
 
-    # Fetch the actual tab sheetId (not the spreadsheet ID) for the API call.
+    for tab_name, num in row_map.items():
+        _delete_and_shift(service, sheet, tab_name, num)
+
+
+def _delete_and_shift(service, sheet, tab_name, row_num):
+    """Internal helper to delete from Google and shift DB indexes for a specific tab."""
     sheets = _get_sheet_meta(service, sheet.google_sheet_id)
-    sheet_tab_id = sheets[0]["properties"]["sheetId"]
+    tab_id = None
+    for s in sheets:
+        if s["properties"]["title"] == tab_name:
+            tab_id = s["properties"]["sheetId"]
+            break
+            
+    if tab_id is None: return # Tab gone?
 
     service.spreadsheets().batchUpdate(
         spreadsheetId=sheet.google_sheet_id,
@@ -232,23 +400,32 @@ def _handle_delete(service, sheet, event):
             "requests": [{
                 "deleteDimension": {
                     "range": {
-                        "sheetId": sheet_tab_id,
+                        "sheetId": tab_id,
                         "dimension": "ROWS",
-                        "startIndex": event.row_number - 1,  # 0-indexed
-                        "endIndex": event.row_number,
+                        "startIndex": row_num - 1,
+                        "endIndex": row_num,
                     }
                 }
             }]
         }
     ).execute()
 
-    # Shift all DB row numbers above the deleted row down by 1 to maintain
-    # consistency with Google Sheets. Use select_for_update to prevent races.
+    # COMPLEX: Update row numbers in the DB for THIS tab
+    # We must iterate rows that exist in this tab and have row_num > target
+    rows_to_shift = SheetRow.objects.filter(sheet=sheet)
+    # This part is difficult because PostgreSQL JSON matching is slow in bulk update.
+    # We will do a loop or raw SQL if needed, but for modularity let's do a loop.
+    # Performance is acceptable for few hundred rows.
     with transaction.atomic():
-        SheetRow.objects.select_for_update().filter(
-            sheet=sheet,
-            sheet_row_number__gt=event.row_number
-        ).update(sheet_row_number=F("sheet_row_number") - 1)
+        all_rows = SheetRow.objects.select_for_update().filter(sheet=sheet)
+        for r in all_rows:
+            rmap = r.tab_row_numbers or {}
+            if tab_name in rmap and rmap[tab_name] > row_num:
+                rmap[tab_name] -= 1
+                if r.sheet_row_number == rmap[tab_name] + 1:
+                    r.sheet_row_number -= 1
+                r.tab_row_numbers = rmap
+                r.save(update_fields=["tab_row_numbers", "sheet_row_number"])
 
 
 @shared_task(bind=True)

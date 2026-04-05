@@ -363,6 +363,15 @@ def create_google_sheet(request):
                 body={"values": [sheet_columns]},
             ).execute()
 
+        # ── Parse Sync Config ─────────────────────────────────────────────────
+        sync_config_raw = request.POST.get("sync_config", "")
+        sync_config = {}
+        if sync_config_raw:
+            try:
+                sync_config = json.loads(sync_config_raw)
+            except json.JSONDecodeError:
+                pass
+
         # ── Create DB Sheet record ────────────────────────────────────────────
         sheet = Sheet.objects.create(
             owner=request.user,
@@ -370,6 +379,7 @@ def create_google_sheet(request):
             google_sheet_id=spreadsheet_id,
             google_url=spreadsheet["spreadsheetUrl"],
             columns=sheet_columns,
+            sync_config=sync_config,
         )
 
         # ── Create SheetColumn records (typed columns only) ───────────────────
@@ -485,6 +495,7 @@ def edit_sheet(request, sheet_id):
         data = json.loads(request.body)
         title = data.get("title", "").strip()
         column_configs_raw = data.get("column_configs", [])
+        sync_config = data.get("sync_config", {})
 
         if not title:
             return JsonResponse({"error": "Sheet title is required/empty."}, status=400)
@@ -548,7 +559,8 @@ def edit_sheet(request, sheet_id):
             # Apply root level sheet updates
             sheet.name = title
             sheet.columns = new_flat_headers
-            sheet.save(update_fields=["name", "columns"])
+            sheet.sync_config = sync_config
+            sheet.save(update_fields=["name", "columns", "sync_config"])
 
         # ── 3. Reflect Header Changes to Remote Google Sheet ─────────
         try:
@@ -879,6 +891,7 @@ def sheet_grid_data(request, sheet_id):
         "title": sheet.name,
         "columns": headers,
         "column_configs": column_configs,
+        "sync_config": sheet.sync_config,
         "role": role,
         "can_see_all": role in ("owner", "collaborator"),
         "rows": [

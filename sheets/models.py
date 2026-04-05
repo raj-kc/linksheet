@@ -144,6 +144,9 @@ class Sheet(models.Model):
 
     columns = models.JSONField(default=list)  # flat list of header names — kept for Google Sheets sync cache
 
+    # Sync Configuration for SaaS categorization (e.g., categorizing tabs)
+    sync_config = models.JSONField(default=dict, blank=True)
+
     response_count = models.PositiveIntegerField(default=0)
 
     is_active = models.BooleanField(default=True)
@@ -346,6 +349,8 @@ class SheetRow(models.Model):
     )
 
     sheet_row_number = models.PositiveIntegerField(null=True, blank=True)
+    # Tracker for multi-tab sync {tab_title: row_number}
+    tab_row_numbers = models.JSONField(default=dict, blank=True)
 
     data = models.JSONField()  # column -> value
 

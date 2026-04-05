@@ -978,6 +978,34 @@
                 </div>
             </div>
 
+            <!-- Google Sheet Grouping -->
+            <div class="border-t border-border pt-4">
+                <label class="block text-sm font-medium text-foreground mb-1.5 flex items-center justify-between">
+                    <div>
+                        Partition Google Sheet Tabs <span class="text-muted font-normal">(Optional)</span>
+                    </div>
+                </label>
+                <p class="text-xs text-muted mb-2">Create automated spreadsheet tabs in actual Google Sheets based on any column.</p>
+                
+                <div class="flex gap-2">
+                    <select id="google-tab-grouping" class="flex-1 py-2 px-3 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20" onchange="document.getElementById('google-tab-interval').classList.toggle('hidden', !this.options[this.selectedIndex].dataset.isDate)">
+                        <option value="">None (Single Tab)</option>
+                    </select>
+                    
+                    <select id="google-tab-interval" class="hidden py-2 px-3 border border-border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                
+                <label class="flex items-center gap-2 mt-3 text-sm text-gray-700 cursor-pointer w-fit">
+                    <input type="checkbox" id="google-tab-all-details" checked class="rounded text-primary focus:ring-primary/20 border-gray-300">
+                    Always keep 'All Details' Master Tab
+                </label>
+            </div>
+
             <!-- Collaborators Section -->
             <div id="collaborator-section" class="border-t border-border pt-4">
                 <label class="block text-sm font-medium text-foreground mb-1.5">
@@ -1323,6 +1351,18 @@
             }));
             
             renderColumnBuilder();
+            
+            // Populate grouping config
+            const sync = data.sync_config || {};
+            document.getElementById("google-tab-grouping").value = sync.grouping_column || "";
+            document.getElementById("google-tab-interval").value = sync.grouping_interval || "monthly";
+            document.getElementById("google-tab-all-details").checked = (sync.keep_all !== false);
+            
+            // Trigger UI update for interval select visibility
+            const catSelect = document.getElementById("google-tab-grouping");
+            const activeOpt = catSelect.options[catSelect.selectedIndex];
+            document.getElementById("google-tab-interval").classList.toggle("hidden", !activeOpt || !activeOpt.dataset.isDate);
+
             openModal("createSheetModal");
         } catch (e) {
             showToast(e.message, "error");
@@ -1717,6 +1757,11 @@
                             },
                             body: JSON.stringify({
                                 title: document.getElementById("sheet-name").value,
+                                sync_config: {
+                                    grouping_column: document.getElementById("google-tab-grouping").value,
+                                    grouping_interval: document.getElementById("google-tab-interval").value,
+                                    keep_all: document.getElementById("google-tab-all-details").checked
+                                },
                                 column_configs: columnConfigs.map(c => ({
                                     id: c.id,  // essential for renaming mappings
                                     column_name: c.name,
@@ -1734,6 +1779,13 @@
                         }
                         formData.set("collaborators", JSON.stringify(collaboratorEmails));
         
+                        const syncConfig = {
+                            grouping_column: document.getElementById("google-tab-grouping").value,
+                            grouping_interval: document.getElementById("google-tab-interval").value,
+                            keep_all: document.getElementById("google-tab-all-details").checked
+                        };
+                        formData.set("sync_config", JSON.stringify(syncConfig));
+
                         response = await fetch("/create-sheet/", {
                             method: "POST",
                             headers: { "X-CSRFToken": getCSRFToken() },
@@ -1889,6 +1941,25 @@
             `;
             container.appendChild(row);
         });
+        
+        // Sync the Categorization dropdown
+        const catSelect = document.getElementById("google-tab-grouping");
+        if (catSelect) {
+            const oldVal = catSelect.value;
+            catSelect.innerHTML = '<option value="">None (Single Tab)</option>';
+            columnConfigs.forEach(col => {
+                if (!col.name.trim()) return;
+                const opt = document.createElement("option");
+                opt.value = col.name.trim();
+                opt.innerText = col.name.trim();
+                if (col.type === "date") opt.dataset.isDate = "true";
+                catSelect.appendChild(opt);
+            });
+            catSelect.value = oldVal;
+            // update visibility of interval
+            const activeOpt = catSelect.options[catSelect.selectedIndex];
+            document.getElementById("google-tab-interval").classList.toggle("hidden", !activeOpt || !activeOpt.dataset.isDate);
+        }
     }
 
     function addColumnBuilderRow() {
