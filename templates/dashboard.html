@@ -555,6 +555,12 @@
                                                 </div>
                                             </div>
                                             {% endif %}
+                                            {% if member.role == "collaborator" %}
+                                            <button onclick="openEditModal('{{ member.sheet.id }}', this)" title="Edit Sheet Schema"
+                                                    class="opacity-0 group-hover:opacity-100 p-2 rounded-md bg-white border border-gray-200 hover:bg-orange-50 text-muted hover:text-orange-600 transition-colors shadow-sm">
+                                                <i class="ph-bold ph-pencil-simple"></i>
+                                            </button>
+                                            {% endif %}
                                             <button onclick="openDataGrid('{{ member.sheet.id }}')"
                                                 class="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm text-xs font-semibold">
                                                 Add / View My Rows <i class="ph-bold ph-caret-right"></i>
@@ -914,7 +920,7 @@
         class="modal-panel relative transform opacity-0 scale-95 transition-all duration-300 ease-out bg-white rounded-2xl shadow-2xl sm:my-8 sm:w-full sm:max-w-lg border border-border max-h-[90vh] overflow-y-auto">
 
         <div class="px-6 py-5 border-b border-border flex justify-between items-center bg-gray-50/50 sticky top-0">
-            <h3 class="text-lg font-semibold text-foreground flex items-center gap-2">
+            <h3 id="sheetFormTitle" class="text-lg font-semibold text-foreground flex items-center gap-2">
                 <div class="p-1.5 bg-primary/10 rounded-md text-primary">
                     <i class="ph-bold ph-file-plus"></i>
                 </div>
@@ -938,12 +944,12 @@
             </div>
 
             <div>
-                <label for="sheet-desc" class="block text-sm font-medium text-foreground mb-1.5">
-                    Description <span class="text-muted font-normal">(Optional)</span>
-                </label>
-                <textarea id="sheet-desc" name="description" rows="2"
-                    placeholder="Briefly describe the purpose of this sheet..."
-                    class="w-full px-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm resize-none"></textarea>
+                <label for="sheet-name" class="block text-sm font-medium text-foreground mb-1.5">Sheet Name</label>
+                <div class="relative">
+                    <input type="text" id="sheet-name" name="title" required placeholder="e.g. Q1 Marketing Survey"
+                        class="w-full pl-10 pr-3 py-2.5 bg-white border border-border rounded-lg text-sm placeholder:text-muted focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-sm" />
+                    <i class="ph-bold ph-text-t absolute left-3 top-3 text-muted"></i>
+                </div>
             </div>
 
             <!-- Legacy Comma Separated Columns (Fallback/Hidden) -->
@@ -973,7 +979,7 @@
             </div>
 
             <!-- Collaborators Section -->
-            <div class="border-t border-border pt-4">
+            <div id="collaborator-section" class="border-t border-border pt-4">
                 <label class="block text-sm font-medium text-foreground mb-1.5">
                     Add Collaborators <span class="text-muted font-normal">(Optional)</span>
                 </label>
@@ -1247,6 +1253,57 @@
 
     let isRefreshing = false; // Prevent multiple refresh calls
 
+    let isEditMode = false;
+    let editSheetId = null;
+
+    function openCreateModal() {
+        isEditMode = false;
+        editSheetId = null;
+        document.getElementById("sheetFormTitle").innerHTML = `<div class="p-1.5 bg-primary/10 rounded-md text-primary"><i class="ph-bold ph-file-plus"></i></div> Create New Sheet`;
+        document.getElementById("btn-create-submit").innerHTML = `Create Sheet <i class="ph-bold ph-arrow-right"></i>`;
+        document.getElementById("createSheetForm").reset();
+        document.getElementById("collaborator-section").classList.remove("hidden");
+        columnConfigs = [];
+        collaboratorEmails = [];
+        renderColumnBuilder();
+        renderCollaborators();
+        openModal("createSheetModal");
+    }
+
+    async function openEditModal(sheetId, btnElement) {
+        isEditMode = true;
+        editSheetId = sheetId;
+        document.getElementById("sheetFormTitle").innerHTML = `<div class="p-1.5 bg-blue-500/10 rounded-md text-blue-500"><i class="ph-bold ph-pencil-simple"></i></div> Edit Sheet Settings`;
+        document.getElementById("btn-create-submit").innerHTML = `<i class="ph-bold ph-check"></i> Save Changes`;
+        document.getElementById("createSheetForm").reset();
+        document.getElementById("collaborator-section").classList.add("hidden");
+
+        const originalHtml = btnElement.innerHTML;
+        btnElement.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i>`;
+        try {
+            const res = await fetch(`/api/sheets/${sheetId}/grid/`);
+            if (!res.ok) throw new Error("Failed to load settings");
+            const data = await res.json();
+            
+            document.getElementById("sheet-name").value = data.title;
+            columnConfigs = (data.column_configs || []).map(c => ({
+                id: c.id || null,
+                name: c.column_name || c.name || "",
+                type: c.column_type || c.type || "text",
+                options: c.options || [],
+                validation: c.validation || { required: false, unique: false },
+                default_value: c.default_value || ""
+            }));
+            
+            renderColumnBuilder();
+            openModal("createSheetModal");
+        } catch (e) {
+            showToast(e.message, "error");
+        } finally {
+            btnElement.innerHTML = originalHtml;
+        }
+    }
+
     // === CORE MODAL FUNCTIONS ===
     function openModal(modalId, initData = null) {
         const modal = document.getElementById(modalId);
@@ -1390,6 +1447,10 @@
                             </a>
                         </div>
                     </div>
+                    <button onclick="openEditModal('${sheet.id}', this)" title="Edit Sheet Schema"
+                            class="p-2 rounded-md hover:bg-orange-50 text-muted hover:text-orange-600 transition-colors">
+                        <i class="ph-bold ph-pencil-simple"></i>
+                    </button>
                     <button onclick="confirmDeleteSheet('${sheet.id}', '${escapeHtml(sheet.name)}')" title="Delete Sheet"
                             class="p-2 rounded-md hover:bg-red-50 text-muted hover:text-red-600 transition-colors">
                         <i class="ph-bold ph-trash"></i>
@@ -1605,10 +1666,10 @@
                 const names = new Set();
                 let valid = true;
                 columnConfigs.forEach(c => {
-                    const n = c.name.trim();
+                    const n = (c.name || '').trim();
                     if (!n) valid = false;
-                    if (names.has(n)) valid = false;
-                    names.add(n);
+                    if (names.has(n.toLowerCase())) valid = false;
+                    names.add(n.toLowerCase());
                 });
                 if (!valid && columnConfigs.length > 0) {
                     showToast("Column names must be non-empty and unique.", "error");
@@ -1616,35 +1677,61 @@
                 }
 
                 btn.disabled = true;
-                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> Creating...`;
-
-                const formData = new FormData(this);
-                // Inject column_configs JSON and collaborators JSON
-                if (columnConfigs.length > 0) {
-                    formData.set("column_configs", JSON.stringify(columnConfigs));
-                }
-                formData.set("collaborators", JSON.stringify(collaboratorEmails));
+                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-lg"></i> ${isEditMode ? "Saving..." : "Creating..."}`;
 
                 try {
-                    const response = await fetch("/create-sheet/", {
-                        method: "POST",
-                        headers: { "X-CSRFToken": getCSRFToken() },
-                        body: formData
-                    });
+                    let response;
+                    if (isEditMode) {
+                        response = await fetch(`/api/sheets/${editSheetId}/edit/`, {
+                            method: "PUT",
+                            headers: { 
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": getCSRFToken() 
+                            },
+                            body: JSON.stringify({
+                                title: document.getElementById("sheet-name").value,
+                                column_configs: columnConfigs.map(c => ({
+                                    id: c.id,  // essential for renaming mappings
+                                    column_name: c.name,
+                                    column_type: c.type,
+                                    options: c.options,
+                                    validation: c.validation,
+                                    default_value: c.default_value
+                                }))
+                            })
+                        });
+                    } else {
+                        const formData = new FormData(this);
+                        if (columnConfigs.length > 0) {
+                            formData.set("column_configs", JSON.stringify(columnConfigs));
+                        }
+                        formData.set("collaborators", JSON.stringify(collaboratorEmails));
+        
+                        response = await fetch("/create-sheet/", {
+                            method: "POST",
+                            headers: { "X-CSRFToken": getCSRFToken() },
+                            body: formData
+                        });
+                    }
 
                     const data = await response.json();
                     
                     if (response.ok) {
                         closeModal('createSheetModal');
-                        openModal('shareSheetModal', data);
-                        if (data.collab_warnings && data.collab_warnings.length > 0) {
-                            setTimeout(() => showToast(data.collab_warnings[0], "warning"), 1000);
+                        if (isEditMode) {
+                            showToast("Sheet settings successfully updated!", "success");
+                            refreshCreatedSheetsTable();
+                        } else {
+                            openModal('shareSheetModal', data);
+                            if (data.collab_warnings && data.collab_warnings.length > 0) {
+                                setTimeout(() => showToast(data.collab_warnings[0], "warning"), 1000);
+                            }
                         }
                     } else {
-                        showToast(data.error || "Failed to create sheet.", "error");
+                        showToast(data.error || "Failed to process request.", "error");
                     }
                 } catch (error) {
-                    showToast("Failed to create sheet. Please try again.", "error");
+                    showToast("Failed to process request. Please try again.", "error");
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = originalContent;
@@ -2153,15 +2240,14 @@
 
         const previousRows = JSON.parse(JSON.stringify(currentData.rows));
 
-        closeDrawer();
-
-        btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Saving...`;
+        // Disable UI but keep drawer open during validation
+        const inputs = document.querySelectorAll("#dynamicForm input, #dynamicForm select");
+        inputs.forEach(i => i.disabled = true);
 
         let tempId = null;
         const isEdit = Boolean(editingRowId);
 
         try {
-            // --------------------
             // OPTIMISTIC CREATE
             // --------------------
             if (!isEdit) {
@@ -2199,7 +2285,16 @@
                 return;
             }
 
-            if (!res.ok) throw new Error("Save failed");
+            if (!res.ok) {
+                if (res.status === 400) {
+                    const errorData = await res.json();
+                    if (errorData.fields) {
+                        displayValidationErrors(errorData.fields);
+                        throw new Error("VALIDATION_ERROR");
+                    }
+                }
+                throw new Error("Save failed");
+            }
 
             const savedRow = await res.json();
 
@@ -2215,18 +2310,53 @@
             }
 
             renderTable();
+            closeDrawer();
             showToast(isEdit ? "Updated successfully ✨" : "Saved instantly ⚡", "success");
 
         } catch (err) {
-            console.error(err);
+            if (err.message !== "VALIDATION_ERROR") {
+                console.error(err);
+                showToast("Save failed — reverted", "error");
+            } else {
+                showToast("Please correct the errors before saving", "error");
+            }
             currentData.rows = previousRows;
             renderTable();
-            showToast("Save failed — reverted", "error");
         } finally {
+            inputs.forEach(i => i.disabled = false);
             btn.disabled = false;
             btn.innerHTML = originalHTML;
             editingRowIndex = null;
             editingRowId = null;
+        }
+    }
+
+    function displayValidationErrors(fields) {
+        // Clear old errors
+        document.querySelectorAll(".validation-error").forEach(el => el.remove());
+        document.querySelectorAll(".border-red-500").forEach(el => el.classList.remove("border-red-500", "focus:ring-red-500/20"));
+
+        for (const [fieldName, message] of Object.entries(fields)) {
+            const input = document.querySelector(`[name="${fieldName}"]`);
+            if (input) {
+                input.classList.remove("border-border", "focus:ring-primary/20", "focus:border-primary");
+                input.classList.add("border-red-500", "focus:ring-red-500/20", "focus:border-red-500");
+                
+                const errorP = document.createElement("p");
+                errorP.className = "validation-error text-red-500 text-[11px] mt-1.5 font-medium flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1";
+                errorP.innerHTML = `<i class="ph-bold ph-warning-circle"></i> ${message}`;
+                input.parentNode.appendChild(errorP);
+                
+                const clearFn = () => {
+                   input.classList.remove("border-red-500", "focus:ring-red-500/20", "focus:border-red-500");
+                   input.classList.add("border-border", "focus:ring-primary/20", "focus:border-primary");
+                   if (errorP.parentNode) errorP.parentNode.removeChild(errorP);
+                   input.removeEventListener('input', clearFn);
+                   input.removeEventListener('change', clearFn);
+                };
+                input.addEventListener('input', clearFn);
+                input.addEventListener('change', clearFn);
+            }
         }
     }
 

@@ -466,6 +466,115 @@ def create_google_sheet(request):
             status=500,
         )
 
+@login_required
+@require_http_methods(["PUT"])
+def edit_sheet(request, sheet_id):
+    """
+    Apply configuration changes to an existing sheet.
+    Only OWNER and COLLABORATOR are permitted.
+    Includes robust data migration if an existing column name changes.
+    """
+    try:
+        from django.db import transaction
+        sheet = get_object_or_404(Sheet, id=sheet_id)
+
+        # Permission check: must be owner or collaborator
+        if not can_manage_sheet(sheet, request.user) and not is_collaborator(sheet, request.user):
+            return JsonResponse({"error": "Forbidden: Only owners and collaborators can edit sheet configuration."}, status=403)
+
+        data = json.loads(request.body)
+        title = data.get("title", "").strip()
+        column_configs_raw = data.get("column_configs", [])
+
+        if not title:
+            return JsonResponse({"error": "Sheet title is required/empty."}, status=400)
+        
+        if not column_configs_raw:
+            return JsonResponse({"error": "At least one column config is required."}, status=400)
+
+        # ── 1. Validate for Duplicates locally ─────────
+        seen_names = set()
+        for c in column_configs_raw:
+            cname = str(c.get("column_name", "")).strip()
+            if not cname:
+                return JsonResponse({"error": "Column names cannot be blank."}, status=400)
+            if cname.lower() in seen_names:
+                return JsonResponse({"error": f"Duplicate column name locally not permitted: '{cname}'"}, status=400)
+            seen_names.add(cname.lower())
+
+        # ── 2. Determine Data Migration and Update Structs ─────────
+        old_configs = {str(c.id): c for c in sheet.column_configs.all()}
+        renames = {} # old_name -> new_name
+        
+        new_col_objs = []
+        new_flat_headers = []
+
+        with transaction.atomic():
+            for idx, cfg in enumerate(column_configs_raw):
+                col_name = str(cfg.get("column_name", "")).strip()
+                col_id = str(cfg.get("id", ""))
+                new_flat_headers.append(col_name)
+
+                # Track rename for data migration
+                if col_id and col_id in old_configs:
+                    old_name = old_configs[col_id].column_name
+                    if old_name != col_name:
+                        renames[old_name] = col_name
+                
+                new_col_objs.append(SheetColumn(
+                    sheet       = sheet,
+                    column_name = col_name,
+                    column_type = cfg.get("column_type", SheetColumn.COLUMN_TYPE_TEXT), # Matches payload keys
+                    position    = idx,
+                    options     = cfg.get("options") or [],
+                    validation  = cfg.get("validation") or {},
+                    default_value = cfg.get("default_value", ""),
+                ))
+
+            # Migrate Data if there are renamed keys
+            if renames:
+                for row in sheet.rows.all():
+                    new_data = {}
+                    for k, v in row.data.items():
+                        new_key = renames.get(k, k)
+                        new_data[new_key] = v
+                    row.data = new_data
+                    row.save(update_fields=["data"])
+
+            # Commit new columns (wipe out all old columns blindly and attach new)
+            sheet.column_configs.all().delete()
+            SheetColumn.objects.bulk_create(new_col_objs)
+            
+            # Apply root level sheet updates
+            sheet.name = title
+            sheet.columns = new_flat_headers
+            sheet.save(update_fields=["name", "columns"])
+
+        # ── 3. Reflect Header Changes to Remote Google Sheet ─────────
+        try:
+            google_creds = GoogleCredentials.objects.get(user=sheet.owner)
+            creds = _refresh_credentials_if_needed(google_creds)
+            service = build("sheets", "v4", credentials=creds, cache_discovery=False)
+
+            # Update Google API headers!
+            body = {"values": [new_flat_headers]}
+            service.spreadsheets().values().update(
+                spreadsheetId=sheet.google_sheet_id,
+                range="A1",
+                valueInputOption="RAW",
+                body=body
+            ).execute()
+        except GoogleCredentials.DoesNotExist:
+            pass # Skip if owner credentials destroyed, they must re-auth
+        except Exception:
+            logger.exception("Failed to update headers on Google Sheet API side. DB is updated.")
+
+        return JsonResponse({"success": True, "sheet_id": sheet.id})
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid Payload format."}, status=400)
+    except Exception as e:
+        logger.exception("PUT /edit/ failed")
+        return JsonResponse({"error": str(e)}, status=500)
 
 @login_required
 @require_POST
@@ -1098,12 +1207,12 @@ def upload_file(request):
 
         return JsonResponse({"url": secure_url})
 
-    except Exception:
+    except Exception as e:
         logger.exception(
             "Cloudinary upload failed for user %s, file %s",
             request.user.username, safe_name
         )
         return JsonResponse(
-            {"error": "File upload failed. Please check your Cloudinary credentials or try again."},
+            {"error": f"File upload failed. Cloudinary says: {str(e)}"},
             status=500,
         )
