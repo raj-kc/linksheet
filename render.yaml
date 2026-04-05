@@ -17,8 +17,8 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    # Runs Celery solo (no child processes), and limits Gunicorn to 1 worker to stay under 512MB RAM
-    startCommand: "celery -A config worker -l info --pool=solo & gunicorn config.wsgi:application --workers 1 --bind 0.0.0.0:10000"
+    # Runs only gunicorn to stay under 512MB RAM (Celery is forced EAGER in settings)
+    startCommand: "gunicorn config.wsgi:application --workers 2 --bind 0.0.0.0:10000"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
