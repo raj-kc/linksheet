@@ -36,11 +36,12 @@ def _is_retriable(exc):
 
 
 @shared_task(
+    bind=True,
     autoretry_for=(HttpError,),          # only retry on Google API errors, not all exceptions
     retry_kwargs={"max_retries": 5, "countdown": 10},
     retry_backoff=True,                  # exponential back-off between retries
 )
-def process_sheet_events(sheet_id):
+def process_sheet_events(self, sheet_id):
     """
     Process all pending SheetSyncEvents for a given sheet.
 
@@ -49,6 +50,11 @@ def process_sheet_events(sheet_id):
     - Sets is_syncing=True for the duration; always resets in finally.
     - Processes CREATE before UPDATE before DELETE to maintain correct ordering.
     """
+    # Retry only on transient HTTP errors (rate-limit / server error).
+    # Permanent errors (bad creds, sheet deleted) bubble up and are NOT retried.
+    exc = getattr(self.request, "exc", None)
+    if isinstance(exc, HttpError) and not _is_retriable(exc):
+        raise  # stop retrying
 
     try:
         sheet = Sheet.objects.get(id=sheet_id)
@@ -56,7 +62,12 @@ def process_sheet_events(sheet_id):
         logger.error("Sheet %s not found — skipping sync.", sheet_id)
         return
 
-    if sheet.is_syncing:
+    # STALE LOCK PROTECTION:
+    # If is_syncing is stuck (e.g. OOM killed the previous process), we check
+    # if it hasn't been updated for 5 minutes. If so, we assume the lock is dead.
+    is_stale = sheet.is_syncing and (timezone.now() - sheet.updated_at).total_seconds() > 300
+
+    if sheet.is_syncing and not is_stale:
         logger.debug("Sheet %s is already syncing — skipping.", sheet_id)
         return
 
@@ -70,20 +81,6 @@ def process_sheet_events(sheet_id):
         # is caught and is_syncing is correctly reset in finally.
         service = get_sheets_service(sheet.owner)
 
-        # Ensure we have columns/headers if they are missing
-        if not sheet.columns:
-            try:
-                header_res = service.spreadsheets().values().get(
-                    spreadsheetId=sheet.google_sheet_id,
-                    range="1:1"
-                ).execute()
-                headers = header_res.get("values", [[]])[0]
-                if headers:
-                    sheet.columns = [h.strip() for h in headers if h.strip()]
-                    sheet.save(update_fields=["columns"])
-            except Exception as e:
-                logger.warning("Could not fetch headers for sheet %s: %s", sheet.id, e)
-
         events = (
             SheetSyncEvent.objects
             .select_related("row")
@@ -93,25 +90,21 @@ def process_sheet_events(sheet_id):
 
         # PHASE 1 — CREATE (must run first to establish row numbers)
         for event in events.filter(action="create"):
-            try:
-                _handle_create(service, sheet, event)
-                event.processed = True
-                event.save(update_fields=["processed"])
-            except Exception as exc:
-                logger.error("Create sync failed for event %s: %s", event.id, exc)
-                event.error = str(exc)
-                event.save(update_fields=["error"])
+            _handle_create(service, sheet, event)
+            event.processed = True
+            event.save(update_fields=["processed"])
 
         # PHASE 2 — UPDATE
         for event in events.filter(action="update"):
             try:
                 _handle_update(service, sheet, event)
-                event.processed = True
-                event.save(update_fields=["processed"])
             except Exception as exc:
                 logger.error("Update sync failed for event %s: %s", event.id, exc)
                 event.error = str(exc)
                 event.save(update_fields=["error"])
+                continue
+            event.processed = True
+            event.save(update_fields=["processed"])
 
         # PHASE 3 — DELETE (highest row numbers first to avoid index drift)
         delete_events = list(
@@ -120,22 +113,17 @@ def process_sheet_events(sheet_id):
         for event in delete_events:
             try:
                 _handle_delete(service, sheet, event)
-                event.processed = True
-                event.save(update_fields=["processed"])
             except Exception as exc:
                 logger.error("Delete sync failed for event %s: %s", event.id, exc)
                 event.error = str(exc)
                 event.save(update_fields=["error"])
+                continue
+            event.processed = True
+            event.save(update_fields=["processed"])
 
         # Mark that sync completed successfully so we can update last_synced.
         synced_successfully = True
         sheet.last_synced = timezone.now()
-
-    except Exception as global_exc:
-        logger.exception("Global sync failure for sheet %s", sheet_id)
-        # Record the error on all pending events for this sheet so it's visible in debug
-        SheetSyncEvent.objects.filter(sheet=sheet, processed=False).update(error=str(global_exc))
-        raise global_exc
 
     finally:
         # Always reset the syncing flag. Only update last_synced when we had
@@ -148,16 +136,19 @@ def process_sheet_events(sheet_id):
             sheet.save(update_fields=["is_syncing"])
 
 
+def _get_sheet_meta(service, spreadsheet_id):
+    """Fetch the full properties of all sheet tabs in the spreadsheet."""
+    meta = service.spreadsheets().get(
+        spreadsheetId=spreadsheet_id,
+        fields="sheets.properties(sheetId,title,index)"
+    ).execute()
+    return sorted(meta["sheets"], key=lambda s: s["properties"]["index"])
+
+
 def _handle_create(service, sheet, event):
     """
     Append a new row to Google Sheets and record the assigned row number.
-
-    After appending, parse the returned updatedRange to find the actual row
-    number Google assigned. This is stored on the SheetRow so future updates
-    and deletes target the correct row.
     """
-    # Guard: the row FK is SET_NULL — if the row was somehow deleted before
-    # sync ran, skip gracefully rather than crashing.
     if not event.row:
         logger.warning("Create event %s has no associated row — skipping.", event.id)
         event.processed = True
@@ -166,9 +157,13 @@ def _handle_create(service, sheet, event):
 
     values = [[event.payload.get(col, "") for col in sheet.columns]]
 
+    # PHASE 1: Fetch the first sheet's literal title for the range.
+    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+    sheet_title = sheets[0]["properties"]["title"]
+
     response = service.spreadsheets().values().append(
         spreadsheetId=sheet.google_sheet_id,
-        range="A1",
+        range=f"'{sheet_title}'!A1",
         valueInputOption="RAW",
         insertDataOption="INSERT_ROWS",
         body={"values": values}
@@ -176,10 +171,9 @@ def _handle_create(service, sheet, event):
 
     updated_range = response["updates"]["updatedRange"]
 
-    # updatedRange looks like "Sheet1!A7:C7" or "B7:D7". Use regex to reliably extract
-    # the row number (the first digit sequence in the string).
-    # This prevents crashes if the sheet omits the tab name or if the table starts on Col B.
-    match = re.search(r"(\d+)", updated_range)
+    # updatedRange looks like "Sheet1!A7:C7". Use regex to reliably extract
+    # the row number — simple split fails when sheet names contain "!A".
+    match = re.search(r"!A(\d+)", updated_range)
     if not match:
         raise ValueError(f"Cannot parse row number from updatedRange: {updated_range!r}")
     row_number = int(match.group(1))
@@ -207,12 +201,8 @@ def _handle_update(service, sheet, event):
     num_cols = max(1, len(sheet.columns))
     end_col = _index_to_col(num_cols - 1)
 
-    meta = service.spreadsheets().get(
-        spreadsheetId=sheet.google_sheet_id,
-        fields="sheets.properties(title,index)"
-    ).execute()
-    sheets_sorted = sorted(meta["sheets"], key=lambda s: s["properties"]["index"])
-    sheet_title = sheets_sorted[0]["properties"]["title"]
+    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+    sheet_title = sheets[0]["properties"]["title"]
 
     range_str = f"'{sheet_title}'!A{row.sheet_row_number}:{end_col}{row.sheet_row_number}"
 
@@ -224,22 +214,6 @@ def _handle_update(service, sheet, event):
     ).execute()
 
 
-def _get_first_sheet_id(service, spreadsheet_id):
-    """
-    Fetch the numeric sheetId of the first worksheet tab.
-
-    The sheetId in batchUpdate deleteDimension requests is the *tab* ID
-    (an integer like 0, 12345…), NOT the spreadsheet ID string. Hardcoding 0
-    breaks when the first tab has been renamed or reordered.
-    """
-    meta = service.spreadsheets().get(
-        spreadsheetId=spreadsheet_id,
-        fields="sheets.properties(sheetId,index)"
-    ).execute()
-    sheets = sorted(meta["sheets"], key=lambda s: s["properties"]["index"])
-    return sheets[0]["properties"]["sheetId"]
-
-
 def _handle_delete(service, sheet, event):
     """
     Delete a row from Google Sheets by row number and renumber all subsequent
@@ -249,7 +223,8 @@ def _handle_delete(service, sheet, event):
         raise ValueError("Missing row_number for delete event.")
 
     # Fetch the actual tab sheetId (not the spreadsheet ID) for the API call.
-    sheet_tab_id = _get_first_sheet_id(service, sheet.google_sheet_id)
+    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+    sheet_tab_id = sheets[0]["properties"]["sheetId"]
 
     service.spreadsheets().batchUpdate(
         spreadsheetId=sheet.google_sheet_id,
