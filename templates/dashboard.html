@@ -534,8 +534,27 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-gray-600 font-medium">{{ member.joined_at|date:"M d,                                             Y" }}</td>
-                                        <td class="px-6 py-4 text-right">
+                                        <td class="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                            {% if member.role == "collaborator" %}
+                                            <div class="relative download-dropdown opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onclick="toggleDownloadMenu(event, 'joined-{{ member.sheet.id }}')"
+                                                        id="download-btn-joined-{{ member.sheet.id }}"
+                                                        title="Download Sheet"
+                                                        class="p-2 rounded-md bg-white border border-gray-200 hover:bg-blue-50 text-muted hover:text-blue-600 transition-colors shadow-sm">
+                                                    <i class="ph-bold ph-download-simple" id="download-icon-joined-{{ member.sheet.id }}"></i>
+                                                    <i class="ph-bold ph-spinner animate-spin text-lg hidden" id="download-spinner-joined-{{ member.sheet.id }}"></i>
+                                                </button>
+                        
+                                                <div id="download-menu-joined-{{ member.sheet.id }}" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10 text-left">
+                                                    <a href="#" onclick="handleDownload(event, '{{ member.sheet.id }}', 'xlsx', 'joined')" class="block px-4 py-2 text-sm hover:bg-gray-50 rounded-t-lg text-gray-700">
+                                                        <i class="ph-bold ph-file-xls mr-2"></i>Excel (.xlsx)
+                                                    </a>
+                                                    <a href="#" onclick="handleDownload(event, '{{ member.sheet.id }}', 'csv', 'joined')" class="block px-4 py-2 text-sm hover:bg-gray-50 rounded-b-lg text-gray-700">
+                                                        <i class="ph-bold ph-file-csv mr-2"></i>CSV (.csv)
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            {% endif %}
                                             <button onclick="openDataGrid('{{ member.sheet.id }}')"
                                                 class="opacity-0 group-hover:opacity-100 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm text-xs font-semibold">
                                                 Add / View My Rows <i class="ph-bold ph-caret-right"></i>
@@ -961,6 +980,7 @@
                 <p class="text-xs text-muted mb-2">Collaborators have full access to edit all data.</p>
                 <div class="flex gap-2 mb-2">
                     <input type="email" id="collab-email-input" placeholder="teammate@example.com" 
+                        onkeydown="if(event.key==='Enter') { event.preventDefault(); addCollaboratorBadge(); }"
                         class="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                     <button type="button" onclick="addCollaboratorBadge()"
                         class="px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-border rounded-lg text-sm font-medium transition-colors">
@@ -1476,16 +1496,17 @@
     });
 
     // === HANDLE DOWNLOAD CLICKS ===
-    function handleDownload(event, sheetId, format) {
+    function handleDownload(event, sheetId, format, prefix = '') {
         event.preventDefault();
 
-        const icon = document.getElementById(`download-icon-${sheetId}`);
-        const spinner = document.getElementById(`download-spinner-${sheetId}`);
-        const menu = document.getElementById(`download-menu-${sheetId}`);
+        const pfx = prefix ? `${prefix}-` : '';
+        const icon = document.getElementById(`download-icon-${pfx}${sheetId}`);
+        const spinner = document.getElementById(`download-spinner-${pfx}${sheetId}`);
+        const menu = document.getElementById(`download-menu-${pfx}${sheetId}`);
 
         // 1️⃣ Show spinner, hide icon
-        icon.classList.add('hidden');
-        spinner.classList.remove('hidden');
+        if (icon) icon.classList.add('hidden');
+        if (spinner) spinner.classList.remove('hidden');
 
         // 2️⃣ Trigger download
         const downloadUrl = `/sheets/${sheetId}/download/?format=${format}`;
@@ -1497,12 +1518,12 @@
         document.body.removeChild(link);
 
         // 3️⃣ Close dropdown
-        menu.classList.add('hidden');
+        if (menu) menu.classList.add('hidden');
 
         // 4️⃣ Hide spinner & show success toast (after download starts)
         setTimeout(() => {
-            spinner.classList.add('hidden');
-            icon.classList.remove('hidden');
+            if (spinner) spinner.classList.add('hidden');
+            if (icon) icon.classList.remove('hidden');
 
             showToast(
                 `Sheet downloaded successfully as ${format.toUpperCase()}`,
@@ -1886,10 +1907,10 @@
                 return res.json();
             })
             .then(data => {
-                // 🔥 State is the ONLY thing updated here
                 currentData = {
                     title: data.title,
                     columns: data.columns || [],
+                    column_configs: data.column_configs || [],
                     rows: data.rows || []
                 };
 
