@@ -36,12 +36,11 @@ def _is_retriable(exc):
 
 
 @shared_task(
-    bind=True,
     autoretry_for=(HttpError,),          # only retry on Google API errors, not all exceptions
     retry_kwargs={"max_retries": 5, "countdown": 10},
     retry_backoff=True,                  # exponential back-off between retries
 )
-def process_sheet_events(self, sheet_id):
+def process_sheet_events(sheet_id):
     """
     Process all pending SheetSyncEvents for a given sheet.
 
@@ -50,11 +49,6 @@ def process_sheet_events(self, sheet_id):
     - Sets is_syncing=True for the duration; always resets in finally.
     - Processes CREATE before UPDATE before DELETE to maintain correct ordering.
     """
-    # Retry only on transient HTTP errors (rate-limit / server error).
-    # Permanent errors (bad creds, sheet deleted) bubble up and are NOT retried.
-    exc = getattr(self.request, "exc", None)
-    if isinstance(exc, HttpError) and not _is_retriable(exc):
-        raise  # stop retrying
 
     try:
         sheet = Sheet.objects.get(id=sheet_id)
@@ -76,6 +70,20 @@ def process_sheet_events(self, sheet_id):
         # is caught and is_syncing is correctly reset in finally.
         service = get_sheets_service(sheet.owner)
 
+        # Ensure we have columns/headers if they are missing
+        if not sheet.columns:
+            try:
+                header_res = service.spreadsheets().values().get(
+                    spreadsheetId=sheet.google_sheet_id,
+                    range="1:1"
+                ).execute()
+                headers = header_res.get("values", [[]])[0]
+                if headers:
+                    sheet.columns = [h.strip() for h in headers if h.strip()]
+                    sheet.save(update_fields=["columns"])
+            except Exception as e:
+                logger.warning("Could not fetch headers for sheet %s: %s", sheet.id, e)
+
         events = (
             SheetSyncEvent.objects
             .select_related("row")
@@ -87,25 +95,23 @@ def process_sheet_events(self, sheet_id):
         for event in events.filter(action="create"):
             try:
                 _handle_create(service, sheet, event)
+                event.processed = True
+                event.save(update_fields=["processed"])
             except Exception as exc:
                 logger.error("Create sync failed for event %s: %s", event.id, exc)
                 event.error = str(exc)
                 event.save(update_fields=["error"])
-                continue
-            event.processed = True
-            event.save(update_fields=["processed"])
 
         # PHASE 2 — UPDATE
         for event in events.filter(action="update"):
             try:
                 _handle_update(service, sheet, event)
+                event.processed = True
+                event.save(update_fields=["processed"])
             except Exception as exc:
                 logger.error("Update sync failed for event %s: %s", event.id, exc)
                 event.error = str(exc)
                 event.save(update_fields=["error"])
-                continue
-            event.processed = True
-            event.save(update_fields=["processed"])
 
         # PHASE 3 — DELETE (highest row numbers first to avoid index drift)
         delete_events = list(
@@ -114,17 +120,22 @@ def process_sheet_events(self, sheet_id):
         for event in delete_events:
             try:
                 _handle_delete(service, sheet, event)
+                event.processed = True
+                event.save(update_fields=["processed"])
             except Exception as exc:
                 logger.error("Delete sync failed for event %s: %s", event.id, exc)
                 event.error = str(exc)
                 event.save(update_fields=["error"])
-                continue
-            event.processed = True
-            event.save(update_fields=["processed"])
 
         # Mark that sync completed successfully so we can update last_synced.
         synced_successfully = True
         sheet.last_synced = timezone.now()
+
+    except Exception as global_exc:
+        logger.exception("Global sync failure for sheet %s", sheet_id)
+        # Record the error on all pending events for this sheet so it's visible in debug
+        SheetSyncEvent.objects.filter(sheet=sheet, processed=False).update(error=str(global_exc))
+        raise global_exc
 
     finally:
         # Always reset the syncing flag. Only update last_synced when we had
