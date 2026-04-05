@@ -85,7 +85,13 @@ def process_sheet_events(self, sheet_id):
 
         # PHASE 1 — CREATE (must run first to establish row numbers)
         for event in events.filter(action="create"):
-            _handle_create(service, sheet, event)
+            try:
+                _handle_create(service, sheet, event)
+            except Exception as exc:
+                logger.error("Create sync failed for event %s: %s", event.id, exc)
+                event.error = str(exc)
+                event.save(update_fields=["error"])
+                continue
             event.processed = True
             event.save(update_fields=["processed"])
 
@@ -159,9 +165,10 @@ def _handle_create(service, sheet, event):
 
     updated_range = response["updates"]["updatedRange"]
 
-    # updatedRange looks like "Sheet1!A7:C7". Use regex to reliably extract
-    # the row number — simple split fails when sheet names contain "!A".
-    match = re.search(r"!A(\d+)", updated_range)
+    # updatedRange looks like "Sheet1!A7:C7" or "B7:D7". Use regex to reliably extract
+    # the row number (the first digit sequence in the string).
+    # This prevents crashes if the sheet omits the tab name or if the table starts on Col B.
+    match = re.search(r"(\d+)", updated_range)
     if not match:
         raise ValueError(f"Cannot parse row number from updatedRange: {updated_range!r}")
     row_number = int(match.group(1))
