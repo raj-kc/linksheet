@@ -1160,6 +1160,33 @@
                 </div>
             </div>
 
+            <!-- CATEGORY / TABS TOOLBAR -->
+            <div id="grid-category-toolbar" class="px-6 py-2.5 bg-gray-50/80 border-b border-border flex items-center gap-4 shrink-0 transition-all">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Group By:</label>
+                    <select id="groupByColumn" onchange="handleGroupingChange()" class="py-1 px-2 pr-8 border border-gray-200 text-sm rounded bg-white focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 transition-all shadow-sm font-medium text-gray-700 max-w-[180px] truncate">
+                        <option value="">None (All Records)</option>
+                    </select>
+                    
+                    <select id="groupByDateInterval" onchange="handleGroupingChange()" class="hidden py-1 px-2 pr-8 border border-gray-200 text-sm rounded bg-white focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 transition-all shadow-sm font-medium text-gray-700">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                
+                <div class="h-5 w-px bg-gray-200 mx-1 hidden" id="gridTabsDivider"></div>
+                
+                <!-- TABS CONTAINER -->
+                <div class="flex-1 overflow-hidden relative">
+                    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50/80 to-transparent pointer-events-none z-10"></div>
+                    <div id="gridTabsContainer" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth relative overscroll-x-contain pb-1 opacity-0 transition-opacity">
+                        <!-- JS generated tabs -->
+                    </div>
+                </div>
+            </div>
+
             <div class="flex-1 relative overflow-hidden flex flex-col bg-gray-50/50">
 
                 <div id="grid-loader"
@@ -2005,6 +2032,12 @@
                 document.getElementById("grid-title").innerText =
                     currentData.title || "Untitled Sheet";
 
+                // Initialize grouping state
+                activeGroupColumn = "";
+                activeDateInterval = "monthly";
+                activeTabValue = "ALL";
+                buildCategoryUI();
+
                 // 🔁 Single render pipeline
                 renderTable();
             })
@@ -2017,6 +2050,120 @@
             });
     }
 
+    // --- 2.5 Grouping / Tabs Logic ---
+    let activeGroupColumn = "";
+    let activeDateInterval = "monthly";
+    let activeTabValue = "ALL";
+
+    function buildCategoryUI() {
+        const select = document.getElementById("groupByColumn");
+        select.innerHTML = '<option value="">None (All Records)</option>';
+        currentData.columns.forEach(col => {
+            const opt = document.createElement("option");
+            opt.value = col;
+            opt.innerText = col;
+            select.appendChild(opt);
+        });
+        document.getElementById("groupByDateInterval").value = "monthly";
+        document.getElementById("gridTabsContainer").classList.add("opacity-0");
+        document.getElementById("gridTabsDivider").classList.add("hidden");
+        document.getElementById("groupByDateInterval").classList.add("hidden");
+    }
+
+    function getGroupedValue(rawVal, isDate, interval) {
+        if (rawVal === undefined || rawVal === null || rawVal === "") return "Uncategorized";
+        if (!isDate) return String(rawVal);
+        
+        try {
+            const d = new Date(rawVal);
+            if (isNaN(d.getTime())) return "Invalid Date";
+            if (interval === "yearly") return d.getFullYear().toString();
+            if (interval === "monthly") return d.toLocaleString('default', { month: 'short', year: 'numeric' });
+            if (interval === "daily") return d.toLocaleDateString();
+            if (interval === "weekly") {
+                const firstDayOfYear = new Date(d.getFullYear(), 0, 1);
+                const pastDaysOfYear = (d - firstDayOfYear) / 86400000;
+                const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+                return `Week ${weekNum}, ${d.getFullYear()}`;
+            }
+        } catch {
+            return "Uncategorized";
+        }
+        return String(rawVal);
+    }
+
+    function extractUniqueValues(col, isDate, interval) {
+        const uniqueSet = new Set();
+        currentData.rows.forEach(r => {
+            const v = getGroupedValue(r.data[col], isDate, interval);
+            uniqueSet.add(v);
+        });
+        const arr = Array.from(uniqueSet).sort();
+        const hasUncat = arr.indexOf("Uncategorized");
+        if (hasUncat > -1) {
+            arr.splice(hasUncat, 1);
+            arr.push("Uncategorized");
+        }
+        return arr;
+    }
+
+    function renderGridTabs(categories) {
+        const container = document.getElementById("gridTabsContainer");
+        const divider = document.getElementById("gridTabsDivider");
+        container.innerHTML = "";
+        
+        if (categories.length === 0) {
+            container.classList.add("opacity-0");
+            divider.classList.add("hidden");
+            return;
+        }
+        
+        container.classList.remove("opacity-0");
+        divider.classList.remove("hidden");
+        
+        const allBtn = document.createElement("button");
+        const isAllActive = activeTabValue === "ALL";
+        allBtn.className = `px-3 py-1 text-xs font-medium rounded-full border whitespace-nowrap transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${isAllActive ? 'bg-primary text-white border-primary' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`;
+        allBtn.innerHTML = `<i class="ph-bold ph-squares-four mr-1 opacity-70"></i>All Records`;
+        allBtn.onclick = () => { activeTabValue = "ALL"; renderGridTabs(categories); renderTable(); };
+        container.appendChild(allBtn);
+        
+        categories.forEach(cat => {
+            const btn = document.createElement("button");
+            const isActive = activeTabValue === cat;
+            btn.className = `px-3 py-1 text-xs font-medium rounded-full border whitespace-nowrap transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${isActive ? 'bg-primary text-white border-primary' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`;
+            btn.innerText = cat;
+            btn.onclick = () => { activeTabValue = cat; renderGridTabs(categories); renderTable(); };
+            container.appendChild(btn);
+        });
+    }
+
+    function handleGroupingChange() {
+        activeGroupColumn = document.getElementById("groupByColumn").value;
+        activeDateInterval = document.getElementById("groupByDateInterval").value;
+        
+        if (!activeGroupColumn) {
+            buildCategoryUI(); // Reset visual state
+            activeTabValue = "ALL";
+            renderTable();
+            return;
+        }
+
+        const config = currentData.column_configs.find(c => c.column_name === activeGroupColumn || c.name === activeGroupColumn);
+        const isDate = config && (config.column_type === 'date' || config.type === 'date');
+        
+        if (isDate) {
+            document.getElementById("groupByDateInterval").classList.remove("hidden");
+        } else {
+            document.getElementById("groupByDateInterval").classList.add("hidden");
+        }
+        
+        const categories = extractUniqueValues(activeGroupColumn, isDate, activeDateInterval);
+        
+        activeTabValue = "ALL";
+        renderGridTabs(categories);
+        renderTable();
+    }
 
 
     // --- 3. Render Table Dynamically ---
@@ -2029,8 +2176,25 @@
         theadRow.innerHTML = "";
         tbody.innerHTML = "";
 
-        if (!currentData.rows || currentData.rows.length === 0) {
+        let rowsToRender = currentData.rows || [];
+
+        // Apply Categorization Filter
+        if (activeGroupColumn && activeTabValue !== "ALL") {
+            const config = currentData.column_configs.find(c => c.column_name === activeGroupColumn || c.name === activeGroupColumn);
+            const isDate = config && (config.column_type === 'date' || config.type === 'date');
+            
+            rowsToRender = rowsToRender.filter(r => {
+                return getGroupedValue(r.data[activeGroupColumn], isDate, activeDateInterval) === activeTabValue;
+            });
+        }
+
+        if (rowsToRender.length === 0) {
             emptyState.classList.remove("hidden");
+            if (activeGroupColumn && currentData.rows.length > 0) {
+                // Modified empty state if it's just filter blocking
+                emptyState.querySelector("h4").innerText = "No records in this category";
+                emptyState.querySelector("p").innerText = "Try selecting a different tab.";
+            }
             return;
         }
 
@@ -2054,7 +2218,8 @@
         theadRow.appendChild(thAction);
 
         // ---------- ROWS ----------
-        currentData.rows.forEach((row, index) => {
+        rowsToRender.forEach((row) => {
+            const index = currentData.rows.findIndex(r => r.id === row.id); // Get global index for drawer editing
             const tr = document.createElement("tr");
             tr.className =
                 "group hover:bg-gray-50/70 transition-colors";
