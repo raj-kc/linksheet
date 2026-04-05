@@ -13,6 +13,7 @@ from sheets.models import (
     ActivityLog,
     GoogleCredentials,
     Sheet,
+    SheetColumn,
     SheetMember,
     SheetRow,
     SheetSnapshot,
@@ -28,6 +29,14 @@ class SheetAdmin(admin.ModelAdmin):
     search_fields = ("name", "owner__username", "owner__email", "google_sheet_id")
     readonly_fields = ("share_token", "google_sheet_id", "google_url", "created_at", "updated_at")
     ordering = ("-created_at",)
+
+
+@admin.register(SheetColumn)
+class SheetColumnAdmin(admin.ModelAdmin):
+    list_display = ("column_name", "column_type", "sheet", "position", "default_value")
+    list_filter = ("column_type",)
+    search_fields = ("column_name", "sheet__name")
+    ordering = ("sheet", "position")
 
 
 @admin.register(SheetMember)

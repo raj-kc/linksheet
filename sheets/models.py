@@ -142,7 +142,7 @@ class Sheet(models.Model):
         db_index=True
     )
 
-    columns = models.JSONField(default=list)
+    columns = models.JSONField(default=list)  # flat list of header names — kept for Google Sheets sync cache
 
     response_count = models.PositiveIntegerField(default=0)
 
@@ -158,13 +158,126 @@ class Sheet(models.Model):
             self.share_token = uuid.uuid4().hex
         super().save(*args, **kwargs)
 
+    def get_column_configs(self):
+        """
+        Return a list of column config dicts.
+
+        Priority:
+          1. If SheetColumn rows exist for this sheet → return structured configs.
+          2. Else fall back to the flat string list in self.columns, synthesising
+             text-type configs on the fly (backward compat for existing sheets).
+        """
+        structured = list(
+            self.column_configs.order_by("position").values(
+                "id", "column_name", "column_type", "options",
+                "validation", "default_value", "position",
+            )
+        )
+        if structured:
+            return structured
+        # Legacy fallback — plain string columns → text type, no validation
+        return [
+            {
+                "id": None,
+                "column_name": col,
+                "column_type": "text",
+                "options": [],
+                "validation": {},
+                "default_value": "",
+                "position": idx,
+            }
+            for idx, col in enumerate(self.columns)
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.owner.username})"
 
 
 # =====================================================
+# Sheet Column Configuration (Typed Columns)
+# =====================================================
+class SheetColumn(models.Model):
+    """
+    Structured column definition for a Sheet.
+
+    One SheetColumn row per column. Only exists for sheets created (or updated)
+    with the new column builder UI. Sheets without SheetColumn rows are treated
+    as plain-text-column sheets (legacy back-compat).
+    """
+    COLUMN_TYPE_TEXT      = "text"
+    COLUMN_TYPE_NUMBER    = "number"
+    COLUMN_TYPE_EMAIL     = "email"
+    COLUMN_TYPE_PHONE     = "phone"
+    COLUMN_TYPE_DATE      = "date"
+    COLUMN_TYPE_RADIO     = "radio"
+    COLUMN_TYPE_DROPDOWN  = "dropdown"
+    COLUMN_TYPE_CHECKBOX  = "checkbox"
+    COLUMN_TYPE_FILE      = "file"  # Cloudinary-backed upload
+
+    COLUMN_TYPE_CHOICES = [
+        (COLUMN_TYPE_TEXT,     "Text"),
+        (COLUMN_TYPE_NUMBER,   "Number"),
+        (COLUMN_TYPE_EMAIL,    "Email"),
+        (COLUMN_TYPE_PHONE,    "Phone"),
+        (COLUMN_TYPE_DATE,     "Date"),
+        (COLUMN_TYPE_RADIO,    "Radio"),
+        (COLUMN_TYPE_DROPDOWN, "Dropdown"),
+        (COLUMN_TYPE_CHECKBOX, "Checkbox"),
+        (COLUMN_TYPE_FILE,     "File Upload"),
+    ]
+
+    # Auto-fill timestamp sentinel
+    DEFAULT_AUTO_TIMESTAMP = "__auto_timestamp__"
+
+    sheet = models.ForeignKey(
+        Sheet,
+        on_delete=models.CASCADE,
+        related_name="column_configs",
+    )
+
+    column_name = models.CharField(max_length=255)
+
+    column_type = models.CharField(
+        max_length=20,
+        choices=COLUMN_TYPE_CHOICES,
+        default=COLUMN_TYPE_TEXT,
+    )
+
+    # Display order (0-based)
+    position = models.PositiveIntegerField(default=0)
+
+    # Options for dropdown/radio — stored as a JSON list of strings
+    options = models.JSONField(default=list, blank=True)
+
+    # Validation rules JSON:
+    # {
+    #   "required":   bool,
+    #   "min_length": int | null,
+    #   "max_length": int | null,
+    #   "regex":      str | null,
+    #   "unique":     bool,
+    # }
+    validation = models.JSONField(default=dict, blank=True)
+
+    # Default value for this column.
+    # Use SheetColumn.DEFAULT_AUTO_TIMESTAMP for an auto-filled timestamp.
+    default_value = models.CharField(max_length=512, blank=True, default="")
+
+    class Meta:
+        ordering = ["position"]
+        unique_together = [("sheet", "column_name")]
+        indexes = [
+            models.Index(fields=["sheet", "position"]),
+        ]
+
+    def __str__(self):
+        return f"{self.column_name} [{self.column_type}] → {self.sheet.name}"
+
+
+# =====================================================
 # Sheet Membership (Access Control)
 # =====================================================
+
 class SheetMember(models.Model):
     # ROLE DEFINITIONS (strict — never mix):
     #   collaborator: Invited explicitly by owner. Full access = same as owner.

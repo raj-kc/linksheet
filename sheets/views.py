@@ -36,7 +36,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from openpyxl.styles import Alignment, Font, PatternFill
 
-from sheets.models import ActivityLog, GoogleCredentials, Sheet, SheetMember, SheetRow, SheetSyncEvent
+from sheets.models import ActivityLog, GoogleCredentials, Sheet, SheetColumn, SheetMember, SheetRow, SheetSyncEvent
 from sheets.permissions import (
     can_access_sheet, can_delete_row, can_download_sheet, can_manage_sheet,
     can_modify_row, can_see_all_rows, can_trigger_sync,
@@ -45,6 +45,7 @@ from sheets.permissions import (
 )
 from sheets.services.sync import generate_fingerprint
 from sheets.tasks import process_sheet_events, sync_sheet_task
+from sheets.validators import apply_defaults, validate_row_data
 from .google_auth import get_google_oauth_flow
 
 logger = logging.getLogger(__name__)
@@ -304,40 +305,65 @@ def create_google_sheet(request):
     """
     Create a new Google Sheet on the owner's Drive and record it in the DB.
 
-    The sheet remains PRIVATE in Google Drive. All data access goes through
-    the app — joinees and collaborators never need direct Drive access.
+    Accepts two column input modes (progressive enhancement):
+      1. column_configs (JSON) — new typed column builder UI.
+         Each item: {name, type, options, validation, default_value}
+      2. columns (comma-separated string) — legacy fallback.
+
+    Optionally add collaborators (JSON list of emails) at creation time.
+    Unregistered collaborator emails return an error.
     """
     try:
         title = request.POST.get("title", "").strip()
-        columns = request.POST.get("columns", "").strip()
-
         if not title:
             return JsonResponse({"error": "Title required"}, status=400)
 
         gc = GoogleCredentials.objects.get(user=request.user)
         creds = _refresh_credentials_if_needed(gc)
-
         service = build("sheets", "v4", credentials=creds, cache_discovery=False)
 
+        # ── Create the Google Spreadsheet ────────────────────────────────────
         spreadsheet = service.spreadsheets().create(
             body={"properties": {"title": title}},
             fields="spreadsheetId,spreadsheetUrl",
         ).execute()
-
         spreadsheet_id = spreadsheet["spreadsheetId"]
 
-        sheet_columns = []
-        if columns:
-            headers = [c.strip() for c in columns.split(",") if c.strip()]
-            if headers:
-                service.spreadsheets().values().update(
-                    spreadsheetId=spreadsheet_id,
-                    range="A1",
-                    valueInputOption="RAW",
-                    body={"values": [headers]},
-                ).execute()
-                sheet_columns = headers
+        # ── Resolve column definitions ────────────────────────────────────────
+        # Priority: typed JSON builder > legacy comma-separated string
+        column_configs_raw = request.POST.get("column_configs", "").strip()
+        columns_raw        = request.POST.get("columns", "").strip()
 
+        sheet_columns = []    # flat list of header names for Google Sheets
+        parsed_configs = []   # list of dicts for SheetColumn creation
+
+        if column_configs_raw:
+            try:
+                parsed_configs = json.loads(column_configs_raw)
+                if not isinstance(parsed_configs, list):
+                    parsed_configs = []
+            except json.JSONDecodeError:
+                parsed_configs = []
+
+            sheet_columns = [
+                cfg.get("name", "").strip()
+                for cfg in parsed_configs
+                if cfg.get("name", "").strip()
+            ]
+        elif columns_raw:
+            # Legacy mode: plain comma-separated column names
+            sheet_columns = [c.strip() for c in columns_raw.split(",") if c.strip()]
+
+        # Write header row to Google Sheet
+        if sheet_columns:
+            service.spreadsheets().values().update(
+                spreadsheetId=spreadsheet_id,
+                range="A1",
+                valueInputOption="RAW",
+                body={"values": [sheet_columns]},
+            ).execute()
+
+        # ── Create DB Sheet record ────────────────────────────────────────────
         sheet = Sheet.objects.create(
             owner=request.user,
             name=title,
@@ -346,13 +372,82 @@ def create_google_sheet(request):
             columns=sheet_columns,
         )
 
-        return JsonResponse({
+        # ── Create SheetColumn records (typed columns only) ───────────────────
+        if parsed_configs:
+            col_objs = []
+            for idx, cfg in enumerate(parsed_configs):
+                col_name = cfg.get("name", "").strip()
+                if not col_name:
+                    continue
+                col_objs.append(SheetColumn(
+                    sheet       = sheet,
+                    column_name = col_name,
+                    column_type = cfg.get("type", SheetColumn.COLUMN_TYPE_TEXT),
+                    position    = idx,
+                    options     = cfg.get("options") or [],
+                    validation  = cfg.get("validation") or {},
+                    default_value = cfg.get("default_value", ""),
+                ))
+            if col_objs:
+                SheetColumn.objects.bulk_create(col_objs)
+
+        # ── Add collaborators (optional, owner only at creation) ───────────────
+        collaborators_raw = request.POST.get("collaborators", "").strip()
+        collab_errors = []
+        if collaborators_raw:
+            try:
+                collab_emails = json.loads(collaborators_raw)
+                if not isinstance(collab_emails, list):
+                    collab_emails = []
+            except json.JSONDecodeError:
+                collab_emails = []
+
+            drive_service = build("drive", "v3", credentials=creds, cache_discovery=False)
+
+            for email in collab_emails:
+                email = email.strip().lower()
+                if not email:
+                    continue
+
+                collab_user = User.objects.filter(email=email).first()
+                if not collab_user:
+                    collab_errors.append(
+                        f"{email} is not registered — ask them to sign in to LinkSheet first."
+                    )
+                    continue
+
+                if collab_user == request.user:
+                    collab_errors.append(f"{email}: you cannot add yourself as a collaborator.")
+                    continue
+
+                # Share on Google Drive
+                try:
+                    drive_service.permissions().create(
+                        fileId=spreadsheet_id,
+                        body={"type": "user", "role": "writer", "emailAddress": email},
+                        fields="id",
+                        sendNotificationEmail=False,
+                    ).execute()
+                except Exception:
+                    logger.warning("Drive share failed for %s on sheet %s", email, sheet.id)
+
+                SheetMember.objects.update_or_create(
+                    sheet=sheet,
+                    user=collab_user,
+                    defaults={"role": SheetMember.ROLE_COLLABORATOR, "is_active": True},
+                )
+
+        response_data = {
             "success": True,
             "sheet_id": sheet.id,
             "sheet_url": sheet.google_url,
             "share_link": request.build_absolute_uri(f"/join/{sheet.share_token}/"),
             "name": sheet.name,
-        })
+        }
+        if collab_errors:
+            response_data["collab_warnings"] = collab_errors
+
+        return JsonResponse(response_data)
 
     except GoogleCredentials.DoesNotExist:
         return JsonResponse(
@@ -361,7 +456,6 @@ def create_google_sheet(request):
         )
     except Exception as exc:
         logger.exception("Failed to create Google Sheet for user %s", request.user.username)
-        # Surface scope/permission errors helpfully; hide internal details otherwise.
         if any(kw in str(exc).lower() for kw in ("insufficient", "scope", "forbidden")):
             return JsonResponse(
                 {"error": "Your Google permissions have changed. Please log out and log back in to re-authorize."},
@@ -518,7 +612,7 @@ def add_row(request, sheet_id):
     """
     Add a new data row to a sheet.
     Any member (OWNER, COLLABORATOR, JOINEE) may add rows.
-    Rows are tagged with request.user so row-level isolation works for JOINEEs.
+    Applies column defaults then validates before saving.
     """
     sheet = get_object_or_404(Sheet, id=sheet_id)
 
@@ -527,12 +621,20 @@ def add_row(request, sheet_id):
 
     data = json.loads(request.body or "{}")
 
+    # Apply default values before validation (so defaults go through validation too)
+    data = apply_defaults(sheet, data)
+
+    # Server-side validation
+    errors = validate_row_data(sheet, data)
+    if errors:
+        return JsonResponse({"error": "Validation failed", "fields": errors}, status=400)
+
     with transaction.atomic():
         row = SheetRow.objects.create(
             sheet=sheet,
             user=request.user,
             data=data,
-            sheet_row_number=None,  # assigned after Google Sheets sync
+            sheet_row_number=None,
         )
         SheetSyncEvent.objects.create(
             sheet=sheet,
@@ -542,7 +644,6 @@ def add_row(request, sheet_id):
         )
 
     _trigger_sheet_sync(sheet.id)
-
     return JsonResponse({"id": row.id, "data": row.data, "pending": True}, status=201)
 
 
@@ -552,6 +653,7 @@ def update_row(request, sheet_id, row_id):
     """
     Update an existing row.
     OWNER/COLLABORATOR can edit any row. JOINEE can only edit their own.
+    Validates updated data against column rules (excluding self from unique checks).
     """
     sheet = get_object_or_404(Sheet, id=sheet_id)
 
@@ -567,13 +669,18 @@ def update_row(request, sheet_id, row_id):
         )
 
     if row.sheet_row_number is None:
-        # Row hasn't been synced to Google Sheets yet — updating would cause drift.
         return JsonResponse(
             {"error": "Row is still syncing. Please try again in a moment."},
             status=409,
         )
 
     data = json.loads(request.body)
+
+    # Validate — exclude self row from unique checks so an unchanged unique
+    # value doesn't falsely trigger a duplicate error
+    errors = validate_row_data(sheet, data, exclude_row_id=row.id)
+    if errors:
+        return JsonResponse({"error": "Validation failed", "fields": errors}, status=400)
 
     with transaction.atomic():
         row.data = data
@@ -632,18 +739,18 @@ def sheet_grid_data(request, sheet_id):
 
     Resolves the user's role in ONE DB query via get_role(), then applies
     row-level filtering accordingly. JOINEE only sees their own rows.
+
+    Now also returns column_configs so the frontend can render type-aware
+    inputs in the form drawer.
     """
     sheet = get_object_or_404(Sheet, id=sheet_id)
 
-    # Single DB query to determine role — used for all subsequent checks.
     role = get_role(sheet, request.user)
-
     if role is None:
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     headers = sheet.columns
     if not headers:
-        # Columns not cached yet — fetch the header row from Google Sheets.
         gc = GoogleCredentials.objects.filter(user=sheet.owner).first()
         if gc:
             creds = gc.get_credentials()
@@ -656,13 +763,13 @@ def sheet_grid_data(request, sheet_id):
             sheet.columns = headers
             sheet.save(update_fields=["columns"])
 
-    # Role already resolved above — pass it directly to get_visible_rows helper.
-    # OWNER/COLLABORATOR see all rows; JOINEE sees only their own.
     rows = get_visible_rows(sheet, request.user)
+    column_configs = sheet.get_column_configs()
 
     return JsonResponse({
         "title": sheet.name,
         "columns": headers,
+        "column_configs": column_configs,
         "role": role,
         "can_see_all": role in ("owner", "collaborator"),
         "rows": [
@@ -934,3 +1041,69 @@ def get_created_sheets(request):
             for sheet in sheets
         ]
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 10. File Upload (Cloudinary)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def upload_file(request):
+    """
+    Upload a file to Cloudinary (free tier) for use in a file-type column.
+
+    Returns the secure Cloudinary URL which is then stored as the cell value
+    in the SheetRow data JSON.
+
+    Limits:
+      - Max file size: CLOUDINARY_MAX_FILE_SIZE_MB (default 10 MB)
+      - Only authenticated users may upload
+
+    POST body: multipart/form-data with field 'file'
+    Response:  {url: "https://res.cloudinary.com/..."}
+    """
+    import cloudinary.uploader
+    from django.conf import settings
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return JsonResponse({"error": "No file provided."}, status=400)
+
+    max_bytes = getattr(settings, "CLOUDINARY_MAX_FILE_SIZE_MB", 10) * 1024 * 1024
+    if uploaded_file.size > max_bytes:
+        mb = getattr(settings, "CLOUDINARY_MAX_FILE_SIZE_MB", 10)
+        return JsonResponse(
+            {"error": f"File too large. Maximum size is {mb} MB."},
+            status=400,
+        )
+
+    # Sanitise filename — use first 80 chars, strip path components
+    import os
+    safe_name = os.path.basename(uploaded_file.name)[:80]
+
+    try:
+        result = cloudinary.uploader.upload(
+            uploaded_file,
+            public_id=f"linksheet/{request.user.id}/{safe_name}",
+            overwrite=True,
+            resource_type="auto",   # handles images, PDFs, docs etc.
+        )
+        secure_url = result.get("secure_url", "")
+        if not secure_url:
+            raise ValueError("Cloudinary returned no URL")
+
+        return JsonResponse({"url": secure_url})
+
+    except Exception:
+        logger.exception(
+            "Cloudinary upload failed for user %s, file %s",
+            request.user.username, safe_name
+        )
+        return JsonResponse(
+            {"error": "File upload failed. Please check your Cloudinary credentials or try again."},
+            status=500,
+        )

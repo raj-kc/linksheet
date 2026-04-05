@@ -42,6 +42,7 @@ urlpatterns = [
 
     # ── AJAX helpers ──────────────────────────────────────────────────────────
     path("sheets/created/", views.get_created_sheets, name="get_created_sheets"),
+    path("api/upload/", views.upload_file, name="upload_file"),
 
     # ── Activity ──────────────────────────────────────────────────────────────
     path("activity/", views.activity_page, name="activity"),

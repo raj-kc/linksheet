@@ -83,6 +83,7 @@ INSTALLED_APPS = [
 
     # Third-party
     "django_celery_results",
+    "cloudinary",
 
     # Local
     "sheets",
@@ -268,3 +269,25 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_TASK_ALWAYS_EAGER = True
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 14. Cloudinary (Free Tier — File Upload Storage)
+#     Sign up at https://cloudinary.com and set these env vars.
+#     Free plan gives 25 GB storage + 25 GB bandwidth/month.
+#
+#     Required env vars:
+#       CLOUDINARY_CLOUD_NAME
+#       CLOUDINARY_API_KEY
+#       CLOUDINARY_API_SECRET
+# ─────────────────────────────────────────────────────────────────────────────
+import cloudinary
+
+cloudinary.config(
+    cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME", ""),
+    api_key    = os.environ.get("CLOUDINARY_API_KEY", ""),
+    api_secret = os.environ.get("CLOUDINARY_API_SECRET", ""),
+    secure     = True,
+)
+
+# Max file size for uploads via column builder: 10 MB
+CLOUDINARY_MAX_FILE_SIZE_MB = int(os.environ.get("CLOUDINARY_MAX_FILE_SIZE_MB", "10"))
