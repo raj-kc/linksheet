@@ -186,27 +186,32 @@ def _ensure_sheet_tab(service, sheet, tab_title):
     return new_sheet_id, True
 
 
-def _get_target_tabs(sheet, row_data):
+def _get_target_tabs(sheet, row_data, first_tab_title="All Details"):
     """
     Determine which tabs this row should live in based on sync_config.
     Returns list of strings (tab names).
     """
-    tabs = []
     config = sheet.sync_config or {}
+    group_col = config.get("grouping_column")
     
-    # 1. Master Tab ("All Details")
-    # If not configured, we assume first tab is the default master.
+    # If no grouping is configured, return empty list to trigger legacy first-tab behavior
+    if not group_col:
+        return []
+
+    tabs = []
+    
+    # 1. Master Tab
     keep_all = config.get("keep_all", True)
+    if keep_all:
+        tabs.append(first_tab_title)
     
     # 2. Category Tab
-    group_col = config.get("grouping_column")
     category_tab = None
-    if group_col and group_col in row_data:
+    if group_col in row_data:
         val = row_data[group_col]
         # Handle date interval grouping
         interval = config.get("grouping_interval")
         is_date = False
-        # Find column type to check if it's date
         for c in sheet.get_column_configs():
             if c.get("column_name") == group_col or c.get("name") == group_col:
                 if c.get("column_type") == "date" or c.get("type") == "date":
@@ -219,7 +224,7 @@ def _get_target_tabs(sheet, row_data):
                     from datetime import datetime
                     d = datetime.fromisoformat(str(val))
                     if interval == "yearly": category_tab = d.strftime("%Y")
-                    elif interval == "monthly": category_tab = d.strftime("%b %Y")
+                    elif interval == "monthly": category_tab = d.strftime("%B %Y")
                     elif interval == "daily": category_tab = d.strftime("%Y-%m-%d")
                     elif interval == "weekly":
                         week = d.isocalendar()[1]
@@ -229,19 +234,8 @@ def _get_target_tabs(sheet, row_data):
             else:
                 category_tab = str(val)
 
-    # Resolve first tab title (Google Sheet default is usually 'Sheet1' or the sheet name)
-    # We'll use the literal first tab if no master name is set.
-    master_tab_name = "All Details"
-    
-    if keep_all:
-        tabs.append(master_tab_name)
-    
-    if category_tab and category_tab != master_tab_name:
+    if category_tab and category_tab != first_tab_title:
         tabs.append(category_tab)
-        
-    if not tabs:
-        # Fallback to the first tab in the spreadsheet
-        return [] # empty list = use default first tab (indexed 0)
         
     return tabs
 
@@ -257,12 +251,14 @@ def _handle_create(service, sheet, event):
         event.save(update_fields=["processed"])
         return
 
-    target_tabs = _get_target_tabs(sheet, event.payload)
+    # PHASE 1: Fetch the first sheet's literal title for the range.
+    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+    first_tab_title = sheets[0]["properties"]["title"]
+
+    target_tabs = _get_target_tabs(sheet, event.payload, first_tab_title=first_tab_title)
     
     if not target_tabs:
-        # Default legacy behavior: append to the first tab
-        sheets = _get_sheet_meta(service, sheet.google_sheet_id)
-        target_tabs = [sheets[0]["properties"]["title"]]
+        target_tabs = [first_tab_title]
 
     row_map = row.tab_row_numbers or {}
     values = [[event.payload.get(col, "") for col in sheet.columns]]
@@ -316,11 +312,13 @@ def _handle_update(service, sheet, event):
     num_cols = max(1, len(sheet.columns))
     end_col = _index_to_col(num_cols - 1)
 
+    sheets = _get_sheet_meta(service, sheet.google_sheet_id)
+    first_tab_title = sheets[0]["properties"]["title"]
+
     # Determine current desired tabs
-    current_tabs = _get_target_tabs(sheet, event.payload)
+    current_tabs = _get_target_tabs(sheet, event.payload, first_tab_title=first_tab_title)
     if not current_tabs:
-        sheets = _get_sheet_meta(service, sheet.google_sheet_id)
-        current_tabs = [sheets[0]["properties"]["title"]]
+        current_tabs = [first_tab_title]
 
     old_row_map = row.tab_row_numbers
     new_row_map = {}
