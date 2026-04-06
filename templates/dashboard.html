@@ -1970,7 +1970,24 @@
     }
     
     // Updates
-    window.updateColName = (idx, val) => { columnConfigs[idx].name = val; };
+    window.updateColName = (idx, val) => { 
+        columnConfigs[idx].name = val; 
+        // Sync the categorization dropdown live so user sees the names as they type
+        const catSelect = document.getElementById("google-tab-grouping");
+        if (catSelect) {
+            const currentVal = catSelect.value;
+            catSelect.innerHTML = '<option value="">None (Single Tab)</option>';
+            columnConfigs.forEach(col => {
+                if (!col.name.trim()) return;
+                const opt = document.createElement("option");
+                opt.value = col.name.trim();
+                opt.innerText = col.name.trim();
+                if (col.type === "date") opt.dataset.isDate = "true";
+                catSelect.appendChild(opt);
+            });
+            catSelect.value = currentVal;
+        }
+    };
     window.updateColType = (idx, val) => { columnConfigs[idx].type = val; renderColumnBuilder(); };
     window.updateColOptions = (idx, val) => { columnConfigs[idx].options = val.split(',').map(s=>s.trim()).filter(x=>x); };
     window.updateColReq = (idx, val) => { columnConfigs[idx].validation.required = val; };
