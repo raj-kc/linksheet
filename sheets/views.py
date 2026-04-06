@@ -578,7 +578,7 @@ def edit_sheet(request, sheet_id):
                     "range": f"'{title}'!A1",
                     "values": [new_flat_headers]
                 })
-            
+
             service.spreadsheets().values().batchUpdate(
                 spreadsheetId=sheet.google_sheet_id,
                 body={
@@ -609,28 +609,43 @@ def delete_sheet(request, sheet_id):
     the owner can manually delete the orphaned file from Drive if needed.
     """
     try:
+        # 1. Fetch with owner restriction
         sheet = get_object_or_404(Sheet, id=sheet_id, owner=request.user)
         google_sheet_id = sheet.google_sheet_id
-
-        # Best-effort: delete from Google Drive (may fail if already deleted or creds expired).
+        
+        # 2. Get credentials early to catch auth errors before Drive action
         try:
             google_creds = GoogleCredentials.objects.get(user=request.user)
             creds = _refresh_credentials_if_needed(google_creds)
-            drive_service = build("drive", "v3", credentials=creds, cache_discovery=False)
-            drive_service.files().delete(fileId=google_sheet_id).execute()
         except Exception:
-            logger.warning(
-                "Google Drive delete failed for sheet %s — DB record will still be removed.",
-                sheet_id,
-            )
+            # If no creds or refresh fails, we can't delete from Drive, but we MUST delete from DB
+            logger.warning("No valid credentials to delete Google Sheet %s from Drive — proceeding with DB deletion.", sheet_id)
+            creds = None
 
+        # 3. Best-effort Google Drive deletion
+        if creds and google_sheet_id:
+            try:
+                drive_service = build("drive", "v3", credentials=creds, cache_discovery=False)
+                drive_service.files().delete(fileId=google_sheet_id).execute()
+                logger.info("Deleted Google Sheet %s from Drive.", google_sheet_id)
+            except Exception:
+                logger.warning(
+                    "Google Drive delete failed for sheet %s — file may have already been removed or permissions changed.",
+                    sheet_id,
+                )
+
+        # 4. Mandatory DB deletion — THIS MUST HAPPEN
         sheet.delete()
+        logger.info("Deleted sheet %s from database.", sheet_id)
+        
         return JsonResponse({"success": True})
 
-    except Exception:
-        logger.exception("Failed to delete sheet %s", sheet_id)
+    except Sheet.DoesNotExist:
+        return JsonResponse({"success": True})  # idempotent
+    except Exception as e:
+        logger.exception("Final fail in delete_sheet %s", sheet_id)
         return JsonResponse(
-            {"success": False, "error": "Failed to delete the sheet. Please try again."},
+            {"success": False, "error": f"Failed to delete the sheet record: {str(e)}"},
             status=400,
         )
 
