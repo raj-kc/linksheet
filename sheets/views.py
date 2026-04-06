@@ -568,13 +568,23 @@ def edit_sheet(request, sheet_id):
             creds = _refresh_credentials_if_needed(google_creds)
             service = build("sheets", "v4", credentials=creds, cache_discovery=False)
 
-            # Update Google API headers!
-            body = {"values": [new_flat_headers]}
-            service.spreadsheets().values().update(
+            # Update Google API headers in ALL tabs
+            meta = service.spreadsheets().get(spreadsheetId=sheet.google_sheet_id, fields="sheets.properties.title").execute()
+            tab_titles = [s["properties"]["title"] for s in meta.get("sheets", [])]
+            
+            data = []
+            for title in tab_titles:
+                data.append({
+                    "range": f"'{title}'!A1",
+                    "values": [new_flat_headers]
+                })
+            
+            service.spreadsheets().values().batchUpdate(
                 spreadsheetId=sheet.google_sheet_id,
-                range="A1",
-                valueInputOption="RAW",
-                body=body
+                body={
+                    "valueInputOption": "RAW",
+                    "data": data
+                }
             ).execute()
         except GoogleCredentials.DoesNotExist:
             pass # Skip if owner credentials destroyed, they must re-auth
@@ -837,11 +847,14 @@ def delete_row(request, row_id):
         )
 
     with transaction.atomic():
+        # Capture the mapping before the row is deleted
+        row_map = row.tab_row_numbers or {}
+
         SheetSyncEvent.objects.create(
             sheet=sheet,
             action="delete",
             row_number=row.sheet_row_number,
-            payload={},
+            payload={"tab_row_numbers": row_map},
         )
         row.delete()
 

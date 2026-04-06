@@ -221,14 +221,25 @@ def _get_target_tabs(sheet, row_data, first_tab_title="All Details"):
         if val:
             if is_date and interval:
                 try:
-                    from datetime import datetime
-                    d = datetime.fromisoformat(str(val))
-                    if interval == "yearly": category_tab = d.strftime("%Y")
-                    elif interval == "monthly": category_tab = d.strftime("%B %Y")
-                    elif interval == "daily": category_tab = d.strftime("%Y-%m-%d")
-                    elif interval == "weekly":
-                        week = d.isocalendar()[1]
-                        category_tab = f"Week {week}, {d.year}"
+                    # Robust date parsing (same formats as validators.py)
+                    d = None
+                    str_val = str(val).strip()
+                    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
+                        try:
+                            d = datetime.strptime(str_val, fmt)
+                            break
+                        except ValueError:
+                            continue
+                    
+                    if d:
+                        if interval == "yearly": category_tab = d.strftime("%Y")
+                        elif interval == "monthly": category_tab = d.strftime("%B %Y")
+                        elif interval == "daily": category_tab = d.strftime("%Y-%m-%d")
+                        elif interval == "weekly":
+                            week = d.isocalendar()[1]
+                            category_tab = f"Week {week}, {d.year}"
+                    else:
+                        category_tab = str_val
                 except:
                     category_tab = str(val)
             else:
@@ -368,7 +379,11 @@ def _handle_update(service, sheet, event):
 
 def _handle_delete(service, sheet, event):
     """Delete a row from all mapped tabs and shift row numbers."""
-    row_map = event.row.tab_row_numbers if event.row else {}
+    # Use JSON from payload if row is already gone
+    row_map = (event.payload or {}).get("tab_row_numbers", {})
+    if not row_map and event.row:
+        row_map = event.row.tab_row_numbers or {}
+    
     if not row_map and event.row_number:
         # Fallback for old system
         sheets = _get_sheet_meta(service, sheet.google_sheet_id)
