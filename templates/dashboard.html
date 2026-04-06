@@ -954,13 +954,7 @@
     }
 </script>
 
-<!-- Create Sheet Modal -->
-<div id="createSheetModal" class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
-    <!-- Backdrop -->
-    <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out absolute"
-        onclick="closeModal('createSheetModal')"></div>
-
-<!-- Create Sheet Modal -->
+{% comment %} Create Sheet Modal {% endcomment %}
 <div id="createSheetModal" class="modal-wrapper fixed inset-0 flex items-center justify-center hidden z-50 overflow-hidden">
     <!-- Centered Backdrop -->
     <div class="modal-backdrop fixed inset-0 bg-slate-900/60 backdrop-blur-md opacity-0 transition-opacity duration-300 ease-out"
@@ -1148,7 +1142,7 @@
 </div>
 
 <!-- Join Sheet Modal -->
-<div id="joinSheetModal" class="modal-wrapper fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
+<div id="joinSheetModal" class="modal-wrapper fixed inset-0 flex items-center justify-center hidden z-50">
     <div class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-out"
         onclick="closeModal('joinSheetModal')"></div>
 
