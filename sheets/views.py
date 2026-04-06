@@ -1188,24 +1188,44 @@ def get_created_sheets(request):
     if request.headers.get("X-Requested-With") != "XMLHttpRequest":
         return JsonResponse({"error": "AJAX only"}, status=400)
 
-    sheets = Sheet.objects.filter(
-        owner=request.user,
-        is_active=True,
-    ).order_by("-created_at")
+    sheets = list(Sheet.objects.filter(owner=request.user, is_active=True).order_by("-created_at"))
+    
+    # Also include collaborating sheets to maintain UI consistency on dashboard refresh
+    collaborating_sheets = list(Sheet.objects.filter(
+        members__user=request.user,
+        members__role="collaborator",
+        is_active=True
+    ).order_by("-created_at"))
+    
+    all_sheets = []
+    
+    # Process owned
+    for s in sheets:
+        all_sheets.append({
+            "id": s.id,
+            "name": s.name,
+            "created_at": s.created_at.strftime("%b %d, %Y"),
+            "response_count": s.response_count,
+            "google_url": s.google_url,
+            "share_link": request.build_absolute_uri(f"/join/{s.share_token}/"),
+            "is_live": s.is_live,
+            "role": "owner"
+        })
+        
+    # Process collaborated
+    for s in collaborating_sheets:
+        all_sheets.append({
+            "id": s.id,
+            "name": s.name,
+            "created_at": s.created_at.strftime("%b %d, %Y"),
+            "google_url": s.google_url,
+            "is_live": s.is_live,
+            "role": "collaborator",
+            "owner_name": s.owner.username
+        })
 
     return JsonResponse({
-        "sheets": [
-            {
-                "id": sheet.id,
-                "name": sheet.name,
-                "created_at": sheet.created_at.strftime("%b %d, %Y"),
-                "response_count": sheet.response_count,
-                "google_url": sheet.google_url,
-                "share_link": request.build_absolute_uri(f"/join/{sheet.share_token}/"),
-                "is_live": sheet.is_live,
-            }
-            for sheet in sheets
-        ]
+        "sheets": all_sheets
     })
 
 
