@@ -929,6 +929,7 @@ def sheet_grid_data(request, sheet_id):
 
     return JsonResponse({
         "title": sheet.name,
+        "is_live": sheet.is_live,
         "columns": headers,
         "column_configs": column_configs,
         "sync_config": sheet.sync_config,

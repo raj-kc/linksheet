@@ -991,18 +991,65 @@
                 </label>
                 <p class="text-xs text-muted mb-2">Create automated spreadsheet tabs in actual Google Sheets based on any column.</p>
                 
-                <div class="flex gap-2">
-                    <select id="google-tab-grouping" class="flex-1 py-2 px-3 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20" onchange="document.getElementById('google-tab-interval').classList.toggle('hidden', !this.options[this.selectedIndex].dataset.isDate)">
-                        <option value="">None (Single Tab)</option>
-                        <option value="__created_at__" data-is-date="true">📅 Submission Date</option>
-                    </select>
-                    
-                    <select id="google-tab-interval" class="hidden py-2 px-3 border border-border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly" selected>Monthly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
+                <div class="space-y-4">
+                        <!-- No Partitioning -->
+                        <div id="partition-opt-none" onclick="setPartitionNone()"
+                            class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-primary bg-primary/5 group ring-primary/5">
+                            <div class="flex items-center gap-2.5 mb-1.5">
+                                <div class="p-1.5 bg-gray-100 text-gray-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <i class="ph-bold ph-minus text-sm"></i>
+                                </div>
+                                <span class="font-bold text-[13px] text-gray-900">None</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 leading-tight">Single master sheet only.</p>
+                        </div>
+
+                        <!-- Partition by Individual Column -->
+                        <div id="partition-opt-column" onclick="setPartitionSource('column')"
+                            class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-border bg-white group">
+                            <div class="flex items-center gap-2.5 mb-1.5">
+                                <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <i class="ph-bold ph-columns text-sm"></i>
+                                </div>
+                                <span class="font-bold text-[13px] text-gray-900">By Column</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 leading-tight">Tabs by column value.</p>
+                        </div>
+
+                        <!-- Partition by Submission Date -->
+                        <div id="partition-opt-date" onclick="setPartitionSource('date')"
+                            class="relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-border bg-white group mt-1">
+                            <div class="flex items-center gap-2.5 mb-1.5">
+                                <div class="p-1.5 bg-purple-50 text-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <i class="ph-bold ph-calendar-plus text-sm"></i>
+                                </div>
+                                <span class="font-bold text-[13px] text-gray-900">By Date</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 leading-tight">Tabs by submission time.</p>
+                        </div>
+                    </div>
+
+                    <!-- Hidden inputs for actual values -->
+                    <input type="hidden" id="google-tab-grouping">
+
+                    <!-- Conditional Config Fields -->
+                    <div id="partition-config-column" class="hidden animate-in fade-in slide-in-from-top-1">
+                         <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Select Categorization Column</label>
+                         <select id="google-tab-column-select" onchange="syncPartitionValue()"
+                            class="w-full py-2.5 px-3 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium">
+                         </select>
+                    </div>
+
+                    <div id="partition-config-date" class="hidden animate-in fade-in slide-in-from-top-1">
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Choose Date Interval</label>
+                         <select id="google-tab-interval" onchange="syncPartitionValue()"
+                            class="w-full py-2.5 px-3 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium">
+                            <option value="daily">Daily Tabs (2024-04-06)</option>
+                            <option value="weekly">Weekly Tabs (Week 14, 2024)</option>
+                            <option value="monthly" selected>Monthly Tabs (Apr 2024)</option>
+                            <option value="yearly">Yearly Tabs (2024)</option>
+                         </select>
+                    </div>
                 </div>
                 
                 <label class="flex items-center gap-2 mt-3 text-sm text-gray-700 cursor-pointer w-fit">
@@ -1181,8 +1228,16 @@
                         title="Refresh">
                         <i class="ph-bold ph-arrows-clockwise text-lg"></i>
                     </button>
+                    <div id="grid-disabled-banner" class="hidden flex items-center gap-2.5 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 animate-in fade-in zoom-in duration-300">
+                        <i class="ph-fill ph-warning-circle text-lg"></i>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold leading-tight">Participation Disabled</span>
+                            <span class="text-[10px] opacity-80">This sheet is currently read-only by the owner.</span>
+                        </div>
+                    </div>
+
                     <div class="h-6 w-px bg-gray-200"></div>
-                    <button onclick="openDrawer('create')"
+                    <button id="btn-grid-add-record" onclick="openDrawer('create')"
                         class="bg-primary hover:bg-primary_hover text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2 transition-all">
                         <i class="ph-bold ph-plus"></i> Add Record
                     </button>
@@ -1327,6 +1382,7 @@
         collaboratorEmails = [];
         renderColumnBuilder();
         renderCollaborators();
+        setPartitionNone();
         openModal("createSheetModal");
     }
 
@@ -1359,14 +1415,20 @@
             
             // Populate grouping config
             const sync = data.sync_config || {};
-            document.getElementById("google-tab-grouping").value = sync.grouping_column || "";
+            const grouping = sync.grouping_column || "";
+            document.getElementById("google-tab-grouping").value = grouping;
             document.getElementById("google-tab-interval").value = sync.grouping_interval || "monthly";
             document.getElementById("google-tab-all-details").checked = (sync.keep_all !== false);
             
-            // Trigger UI update for interval select visibility
-            const catSelect = document.getElementById("google-tab-grouping");
-            const activeOpt = catSelect.options[catSelect.selectedIndex];
-            document.getElementById("google-tab-interval").classList.toggle("hidden", !activeOpt || !activeOpt.dataset.isDate);
+            // Set correct Partition Source UI
+            if (grouping === "__created_at__") {
+                setPartitionSource('date');
+            } else if (grouping) {
+                setPartitionSource('column');
+                document.getElementById('google-tab-column-select').value = grouping;
+            } else {
+                setPartitionNone();
+            }
 
             openModal("createSheetModal");
         } catch (e) {
@@ -2014,23 +2076,84 @@
         renderColumnBuilder();
     }
     
+    window.setPartitionNone = () => {
+        document.getElementById('google-tab-grouping').value = "";
+        document.getElementById("partition-config-column").classList.add("hidden");
+        document.getElementById("partition-config-date").classList.add("hidden");
+        
+        document.getElementById("partition-opt-none").className = "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition-all border-primary bg-primary/5 group ring-primary/5";
+        document.getElementById("partition-opt-column").className = "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-border bg-white group";
+        document.getElementById("partition-opt-date").className = "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-border bg-white group";
+    };
+
+    window.setPartitionSource = (source) => {
+        const colConfig = document.getElementById('partition-config-column');
+        const dateConfig = document.getElementById('partition-config-date');
+        const optNone = document.getElementById('partition-opt-none');
+        const optCol = document.getElementById('partition-opt-column');
+        const optDate = document.getElementById('partition-opt-date');
+        
+        // Toggle UI
+        colConfig.classList.toggle('hidden', source !== 'column');
+        dateConfig.classList.toggle('hidden', source !== 'date');
+        
+        // Active Styles
+        optNone.className = "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-border bg-white group";
+        optCol.className = source === 'column' 
+            ? "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition-all border-primary bg-primary/5 group" 
+            : "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-border bg-white group";
+        optDate.className = source === 'date' 
+            ? "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer transition-all border-primary bg-primary/5 group" 
+            : "relative flex flex-col p-3.5 border-2 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-all border-border bg-white group";
+            
+        // Reset hidden value if switching
+        if (source === 'column') {
+            const select = document.getElementById('google-tab-column-select');
+            select.innerHTML = '<option value="">Choose Column...</option>';
+            columnConfigs.forEach(c => {
+                if (!c.name.trim()) return;
+                const opt = document.createElement("option");
+                opt.value = c.name;
+                opt.innerText = c.name;
+                select.appendChild(opt);
+            });
+        }
+        syncPartitionValue();
+    };
+
+    window.syncPartitionValue = () => {
+        const optCol = document.getElementById('partition-opt-column');
+        const isColumn = optCol.classList.contains('border-primary'); // Check active state
+        
+        const groupingInput = document.getElementById('google-tab-grouping');
+        const intervalInput = document.getElementById('google-tab-interval');
+        const columnSelect = document.getElementById('google-tab-column-select');
+        
+        if (isColumn) {
+            groupingInput.value = columnSelect.value;
+        } else {
+            groupingInput.value = "__created_at__";
+            // Interval is used as-is from its select
+        }
+    };
+
     // Updates
     window.updateColName = (idx, val) => { 
         columnConfigs[idx].name = val; 
-        // Sync the categorization dropdown live so user sees the names as they type
-        const catSelect = document.getElementById("google-tab-grouping");
-        if (catSelect) {
-            const currentVal = catSelect.value;
-            catSelect.innerHTML = '<option value="">None (Single Tab)</option>';
-            columnConfigs.forEach(col => {
-                if (!col.name.trim()) return;
+        // If "By Column" is selected, refresh the dropdown
+        const optCol = document.getElementById('partition-opt-column');
+        if (optCol && optCol.classList.contains('border-primary')) {
+            const select = document.getElementById('google-tab-column-select');
+            const current = select.value;
+            select.innerHTML = '<option value="">Choose Column...</option>';
+            columnConfigs.forEach(c => {
+                if (!c.name.trim()) return;
                 const opt = document.createElement("option");
-                opt.value = col.name.trim();
-                opt.innerText = col.name.trim();
-                if (col.type === "date") opt.dataset.isDate = "true";
-                catSelect.appendChild(opt);
+                opt.value = c.name;
+                opt.innerText = c.name;
+                select.appendChild(opt);
             });
-            catSelect.value = currentVal;
+            select.value = current;
         }
     };
     window.updateColType = (idx, val) => { columnConfigs[idx].type = val; renderColumnBuilder(); };
@@ -2147,12 +2270,21 @@
             .then(data => {
                 currentData = {
                     title: data.title,
+                    is_live: !!data.is_live,
                     role: data.role || 'joinee',
                     can_see_all: !!data.can_see_all,
                     columns: data.columns || [],
                     column_configs: data.column_configs || [],
                     rows: data.rows || []
                 };
+
+                // Liveness Banner/Button Logic
+                const isJoinee = currentData.role === 'joinee';
+                const banner = document.getElementById("grid-disabled-banner");
+                const addBtn = document.getElementById("btn-grid-add-record");
+                
+                if (banner) banner.classList.toggle("hidden", currentData.is_live || !isJoinee);
+                if (addBtn) addBtn.classList.toggle("hidden", isJoinee && !currentData.is_live);
 
                 // Title
                 document.getElementById("grid-title").innerText =
@@ -2363,7 +2495,7 @@
             tdAction.className =
                 "px-4 py-2 text-right border-b border-border w-[140px]";
 
-            const canEdit = currentData.role === 'owner' || currentData.role === 'collaborator' || row.is_own;
+            const canEdit = (currentData.role === 'owner' || currentData.role === 'collaborator' || row.is_own) && (currentData.role !== 'joinee' || currentData.is_live);
 
             if (canEdit) {
                 tdAction.innerHTML = `
