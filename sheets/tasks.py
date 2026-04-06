@@ -77,49 +77,59 @@ def process_sheet_events(self, sheet_id):
     synced_successfully = False
 
     try:
-        # get_sheets_service is inside the try block so a credential error
-        # is caught and is_syncing is correctly reset in finally.
         service = get_sheets_service(sheet.owner)
 
-        events = (
-            SheetSyncEvent.objects
-            .select_related("row")
-            .filter(sheet=sheet, processed=False)
-            .order_by("created_at")
-        )
+        # OUTER LOOP: Continuously process batches of events until none remain.
+        # This handles cases where new events arrive while we are busy syncing a previous batch.
+        while True:
+            events = (
+                SheetSyncEvent.objects
+                .select_related("row")
+                .filter(sheet=sheet, processed=False)
+                .order_by("created_at")
+            )
 
-        # PHASE 1 — CREATE (must run first to establish row numbers)
-        for event in events.filter(action="create"):
-            _handle_create(service, sheet, event)
-            event.processed = True
-            event.save(update_fields=["processed"])
+            # Check if there are any events to process in this iteration.
+            if not events.exists():
+                break
 
-        # PHASE 2 — UPDATE
-        for event in events.filter(action="update"):
-            try:
-                _handle_update(service, sheet, event)
-            except Exception as exc:
-                logger.error("Update sync failed for event %s: %s", event.id, exc)
-                event.error = str(exc)
-                event.save(update_fields=["error"])
-                continue
-            event.processed = True
-            event.save(update_fields=["processed"])
+            # PHASE 1 — CREATE (must run first to establish row numbers)
+            # We process all creates in this batch before moving to updates.
+            create_events = events.filter(action="create")
+            for event in create_events:
+                _handle_create(service, sheet, event)
+                event.processed = True
+                event.save(update_fields=["processed"])
 
-        # PHASE 3 — DELETE (highest row numbers first to avoid index drift)
-        delete_events = list(
-            events.filter(action="delete").order_by("-row_number")
-        )
-        for event in delete_events:
-            try:
-                _handle_delete(service, sheet, event)
-            except Exception as exc:
-                logger.error("Delete sync failed for event %s: %s", event.id, exc)
-                event.error = str(exc)
-                event.save(update_fields=["error"])
-                continue
-            event.processed = True
-            event.save(update_fields=["processed"])
+            # PHASE 2 — UPDATE
+            # MUST refresh row instance in memory because Phase 1 or previous updates
+            # might have shifted row numbers in the DB.
+            update_events = events.filter(action="update")
+            for event in update_events:
+                try:
+                    _handle_update(service, sheet, event)
+                except Exception as exc:
+                    logger.error("Update sync failed for event %s: %s", event.id, exc)
+                    event.error = str(exc)
+                    event.save(update_fields=["error"])
+                    continue
+                event.processed = True
+                event.save(update_fields=["processed"])
+
+            # PHASE 3 — DELETE (highest row numbers first to avoid index drift)
+            delete_events = list(
+                events.filter(action="delete").order_by("-row_number")
+            )
+            for event in delete_events:
+                try:
+                    _handle_delete(service, sheet, event)
+                except Exception as exc:
+                    logger.error("Delete sync failed for event %s: %s", event.id, exc)
+                    event.error = str(exc)
+                    event.save(update_fields=["error"])
+                    continue
+                event.processed = True
+                event.save(update_fields=["processed"])
 
         # Mark that sync completed successfully so we can update last_synced.
         synced_successfully = True
@@ -268,6 +278,23 @@ def _handle_create(service, sheet, event):
         event.save(update_fields=["processed"])
         return
 
+    # IDEMPOTENCY CHECK: If the row already has numbers assigned for ALL target tabs,
+    # it means a previous attempt succeeded but failed to mark the event as processed.
+    sheets_meta = _get_sheet_meta(service, sheet.google_sheet_id)
+    first_tab_title = sheets_meta[0]["properties"]["title"]
+    target_tabs = _get_target_tabs(sheet, event.payload, first_tab_title=first_tab_title)
+    
+    if not target_tabs:
+        target_tabs = [first_tab_title]
+
+    row_map = row.tab_row_numbers or {}
+    
+    # If we already have mappings for all target tabs, skip appending.
+    all_mapped = all(tab in row_map for tab in target_tabs)
+    if all_mapped and row_map:
+        logger.info("Row %s already has mappings in Google Sheets — skipping append.", row.id)
+        return
+
     # PHASE 1: Fetch the first sheet's literal title for the range.
     sheets = _get_sheet_meta(service, sheet.google_sheet_id)
     first_tab_title = sheets[0]["properties"]["title"]
@@ -315,6 +342,10 @@ def _index_to_col(index: int) -> str:
 
 def _handle_update(service, sheet, event):
     """Overwrite an existing row in all relevant tabs."""
+    # REFRESH ROW: Another event in the same batch may have shifted row numbers.
+    if event.row:
+        event.row.refresh_from_db()
+    
     row = event.row
     if not row or not row.tab_row_numbers:
         # Fallback for old rows that only have sheet_row_number
@@ -434,24 +465,22 @@ def _delete_and_shift(service, sheet, tab_name, row_num):
     rows_to_shift = SheetRow.objects.filter(sheet=sheet)
     # We must scan all rows because PostgreSQL JSONField doesn't easily filter on values > X
     # but we can narrow down by checking if the tab exists in their map.
+    # Find rows to shift
     to_update = []
     for r in rows_to_shift:
-        m = r.tab_row_numbers or {}
-        if tab_name in m and m[tab_name] > row_num:
-            m[tab_name] -= 1
-            r.tab_row_numbers = m
+        rmap = r.tab_row_numbers or {}
+        if tab_name in rmap and rmap[tab_name] > row_num:
+            rmap[tab_name] -= 1
+            
+            # Maintenance: sync the legacy sheet_row_number if it matched the old tab_row
+            if r.sheet_row_number == (rmap[tab_name] + 1):
+                r.sheet_row_number -= 1
+                
+            r.tab_row_numbers = rmap
             to_update.append(r)
     
     if to_update:
-        SheetRow.objects.bulk_update(to_update, ["tab_row_numbers"])
-        for r in all_rows:
-            rmap = r.tab_row_numbers or {}
-            if tab_name in rmap and rmap[tab_name] > row_num:
-                rmap[tab_name] -= 1
-                if r.sheet_row_number == rmap[tab_name] + 1:
-                    r.sheet_row_number -= 1
-                r.tab_row_numbers = rmap
-                r.save(update_fields=["tab_row_numbers", "sheet_row_number"])
+        SheetRow.objects.bulk_update(to_update, ["tab_row_numbers", "sheet_row_number"])
 
 
 @shared_task(bind=True)
