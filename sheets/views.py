@@ -664,7 +664,11 @@ def delete_sheet(request, sheet_id):
                     sheet_id,
                 )
 
-        # 4. Mandatory DB deletion — THIS MUST HAPPEN
+        # Delete rows first to prevent ForeignKey constraint failure when
+        # post_delete signal tries to insert ActivityLogs during cascade.
+        sheet.rows.all().delete()
+        
+        # Mandatory DB deletion — THIS MUST HAPPEN
         sheet.delete()
         logger.info("Deleted sheet %s from database.", sheet_id)
         

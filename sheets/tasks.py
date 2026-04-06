@@ -97,7 +97,13 @@ def process_sheet_events(self, sheet_id):
             # We process all creates in this batch before moving to updates.
             create_events = events.filter(action="create")
             for event in create_events:
-                _handle_create(service, sheet, event)
+                try:
+                    _handle_create(service, sheet, event)
+                except Exception as exc:
+                    logger.error("Create sync failed for event %s: %s", event.id, exc)
+                    event.error = str(exc)
+                    event.save(update_fields=["error"])
+                # We always mark as processed so we don't infinitely loop
                 event.processed = True
                 event.save(update_fields=["processed"])
 
@@ -112,7 +118,7 @@ def process_sheet_events(self, sheet_id):
                     logger.error("Update sync failed for event %s: %s", event.id, exc)
                     event.error = str(exc)
                     event.save(update_fields=["error"])
-                    continue
+                # We always mark as processed so we don't infinitely loop
                 event.processed = True
                 event.save(update_fields=["processed"])
 
@@ -127,7 +133,7 @@ def process_sheet_events(self, sheet_id):
                     logger.error("Delete sync failed for event %s: %s", event.id, exc)
                     event.error = str(exc)
                     event.save(update_fields=["error"])
-                    continue
+                # We always mark as processed so we don't infinitely loop
                 event.processed = True
                 event.save(update_fields=["processed"])
 
