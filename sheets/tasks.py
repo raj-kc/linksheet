@@ -205,47 +205,53 @@ def _get_target_tabs(sheet, row_data, first_tab_title="All Details"):
     if keep_all:
         tabs.append(first_tab_title)
     
-    # 2. Category Tab
+    # Determination of categorization value
     category_tab = None
-    if group_col in row_data:
-        val = row_data[group_col]
-        # Handle date interval grouping
-        interval = config.get("grouping_interval")
-        is_date = False
+    target_val = None
+    is_date = False
+
+    if group_col == "__created_at__":
+        target_val = datetime.now()
+        is_date = True
+    elif group_col in row_data:
+        target_val = row_data[group_col]
         for c in sheet.get_column_configs():
             if c.get("column_name") == group_col or c.get("name") == group_col:
                 if c.get("column_type") == "date" or c.get("type") == "date":
                     is_date = True
                 break
-        
-        if val:
-            if is_date and interval:
-                try:
-                    # Robust date parsing (same formats as validators.py)
-                    d = None
-                    str_val = str(val).strip()
+
+    if target_val:
+        interval = config.get("grouping_interval")
+        if is_date and interval:
+            try:
+                d = None
+                if isinstance(target_val, datetime):
+                    d = target_val
+                else:
+                    str_val = str(target_val).strip()
                     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
                         try:
                             d = datetime.strptime(str_val, fmt)
                             break
                         except ValueError:
                             continue
-                    
-                    if d:
-                        if interval == "yearly": category_tab = d.strftime("%Y")
-                        elif interval == "monthly": category_tab = d.strftime("%B %Y")
-                        elif interval == "daily": category_tab = d.strftime("%Y-%m-%d")
-                        elif interval == "weekly":
-                            week = d.isocalendar()[1]
-                            category_tab = f"Week {week}, {d.year}"
-                    else:
-                        category_tab = str_val
-                except:
-                    category_tab = str(val)
-            else:
-                category_tab = str(val)
+                
+                if d:
+                    if interval == "yearly": category_tab = d.strftime("%Y")
+                    elif interval == "monthly": category_tab = d.strftime("%B %Y")
+                    elif interval == "daily": category_tab = d.strftime("%Y-%m-%d")
+                    elif interval == "weekly":
+                        week = d.isocalendar()[1]
+                        category_tab = f"Week {week}, {d.year}"
+                else:
+                    category_tab = str(target_val)
+            except:
+                category_tab = str(target_val)
+        else:
+            category_tab = str(target_val)
 
-    if category_tab and category_tab != first_tab_title:
+    if category_tab and category_tab not in tabs:
         tabs.append(category_tab)
         
     return tabs
@@ -424,13 +430,20 @@ def _delete_and_shift(service, sheet, tab_name, row_num):
     ).execute()
 
     # COMPLEX: Update row numbers in the DB for THIS tab
-    # We must iterate rows that exist in this tab and have row_num > target
+    # Find all rows that were in this tab AFTER the deleted row index.
     rows_to_shift = SheetRow.objects.filter(sheet=sheet)
-    # This part is difficult because PostgreSQL JSON matching is slow in bulk update.
-    # We will do a loop or raw SQL if needed, but for modularity let's do a loop.
-    # Performance is acceptable for few hundred rows.
-    with transaction.atomic():
-        all_rows = SheetRow.objects.select_for_update().filter(sheet=sheet)
+    # We must scan all rows because PostgreSQL JSONField doesn't easily filter on values > X
+    # but we can narrow down by checking if the tab exists in their map.
+    to_update = []
+    for r in rows_to_shift:
+        m = r.tab_row_numbers or {}
+        if tab_name in m and m[tab_name] > row_num:
+            m[tab_name] -= 1
+            r.tab_row_numbers = m
+            to_update.append(r)
+    
+    if to_update:
+        SheetRow.objects.bulk_update(to_update, ["tab_row_numbers"])
         for r in all_rows:
             rmap = r.tab_row_numbers or {}
             if tab_name in rmap and rmap[tab_name] > row_num:
