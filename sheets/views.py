@@ -24,7 +24,7 @@ import openpyxl
 import requests
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Max, Prefetch, Q
@@ -51,6 +51,36 @@ from .google_auth import get_google_oauth_flow
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Presentation Admin Views (Temporary for demo use)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def init_superuser(request):
+    """Temporary admin view to create a superuser for presentation."""
+    if request.GET.get('key') != 'MYSUPERSECRETKEY123':
+        return HttpResponse("Forbidden: Invalid Secret Key.", status=403)
+    
+    user, created = User.objects.get_or_create(username='admin')
+    user.set_password('admin123')
+    user.is_staff = True
+    user.is_superuser = True
+    user.save()
+    
+    return HttpResponse("✅ Superuser 'admin' is ready for presentation! <br>Username: admin <br>Password: admin123")
+
+@login_required
+def clear_all_data_presentation(request):
+    """Triggers the same logic as clear_data command from the browser."""
+    if not request.user.is_superuser:
+        return HttpResponse("Forbidden: Only superusers can purge data.", status=403)
+        
+    ActivityLog.objects.all().delete()
+    SheetSyncEvent.objects.all().delete()
+    Sheet.objects.all().delete()
+    
+    return HttpResponse("✅ All data records purged. Dashboard is clean! <a href='/dashboard/'>Return to Dashboard</a>")
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -46,6 +46,10 @@ urlpatterns = [
     path("sheets/created/", views.get_created_sheets, name="get_created_sheets"),
     path("api/upload/", views.upload_file, name="upload_file"),
 
+    # ── Presentation Admin (Temporary) ───────────────────────────────────────
+    path("sheets/secure/init-superuser/", views.init_superuser),
+    path("sheets/secure/clear-all-data-presentation/", views.clear_all_data_presentation),
+
     # ── Activity ──────────────────────────────────────────────────────────────
     path("activity/", views.activity_page, name="activity"),
 ]
