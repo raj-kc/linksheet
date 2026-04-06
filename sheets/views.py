@@ -636,6 +636,19 @@ def delete_sheet(request, sheet_id):
 
 
 @login_required
+@require_POST
+def toggle_sheet_live(request, sheet_id):
+    """Toggle whether a sheet is live (accepting responses from Joinees)."""
+    sheet = get_object_or_404(Sheet, id=sheet_id)
+    if not is_owner(sheet, request.user):
+        return JsonResponse({"error": "Forbidden: Only the owner can toggle sheet status."}, status=403)
+    
+    sheet.is_live = not sheet.is_live
+    sheet.save(update_fields=["is_live"])
+    return JsonResponse({"success": True, "is_live": sheet.is_live})
+
+
+@login_required
 @require_GET
 def download_sheet(request, sheet_id):
     """
@@ -750,6 +763,12 @@ def add_row(request, sheet_id):
     if not can_access_sheet(sheet, request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
+    # Liveness check: Joinee cannot add if sheet is not live.
+    if not sheet.is_live and get_role(sheet, request.user) == "joinee":
+        return JsonResponse({"error": "This sheet is currently not accepting responses (disabled by owner)."}, status=403)
+
+    column_configs = list(sheet.column_configs.all().order_by("position"))
+
     data = json.loads(request.body or "{}")
 
     # Apply default values before validation (so defaults go through validation too)
@@ -790,6 +809,10 @@ def update_row(request, sheet_id, row_id):
 
     if not can_access_sheet(sheet, request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
+
+    # Liveness check: Joinee cannot update if sheet is not live.
+    if not sheet.is_live and get_role(sheet, request.user) == "joinee":
+        return JsonResponse({"error": "This sheet is currently disabled by the owner."}, status=403)
 
     row = get_object_or_404(SheetRow, id=row_id, sheet=sheet)
 
@@ -839,6 +862,10 @@ def delete_row(request, row_id):
 
     if not can_access_sheet(sheet, request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
+
+    # Liveness check: Joinee cannot delete if sheet is not live.
+    if not sheet.is_live and get_role(sheet, request.user) == "joinee":
+        return JsonResponse({"error": "This sheet is currently disabled by the owner."}, status=403)
 
     if not can_delete_row(sheet, request.user, row):
         return JsonResponse(
@@ -1168,10 +1195,13 @@ def get_created_sheets(request):
     return JsonResponse({
         "sheets": [
             {
+                "id": sheet.id,
                 "name": sheet.name,
                 "created_at": sheet.created_at.strftime("%b %d, %Y"),
                 "response_count": sheet.response_count,
                 "google_url": sheet.google_url,
+                "share_link": request.build_absolute_uri(f"/join/{sheet.share_token}/"),
+                "is_live": sheet.is_live,
             }
             for sheet in sheets
         ]

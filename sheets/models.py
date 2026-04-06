@@ -150,6 +150,7 @@ class Sheet(models.Model):
     response_count = models.PositiveIntegerField(default=0)
 
     is_active = models.BooleanField(default=True)
+    is_live = models.BooleanField(default=True)
     is_syncing = models.BooleanField(default=False)
     last_synced = models.DateTimeField(null=True, blank=True)
 

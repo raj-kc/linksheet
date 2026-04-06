@@ -23,6 +23,7 @@ urlpatterns = [
     path("create-sheet/", views.create_google_sheet, name="create_sheet"),
     path("api/sheets/<int:sheet_id>/edit/", views.edit_sheet, name="edit_sheet"),
     path("sheets/<int:sheet_id>/delete/", views.delete_sheet, name="delete_sheet"),
+    path("sheets/<int:sheet_id>/toggle-live/", views.toggle_sheet_live, name="toggle_sheet_live"),
     path("sheets/<int:sheet_id>/download/", views.download_sheet, name="download_sheet"),
 
     # ── Membership ────────────────────────────────────────────────────────────

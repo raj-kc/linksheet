@@ -342,13 +342,14 @@
                                                 {% endwith %}
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-center">
-                                            <span
-                                                class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-emerald-700 w-[72px]">
-                                                <span
-                                                    class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.8)]"></span>
-                                                Live
-                                            </span>
+                                        <td class="px-6 py-4">
+                                            <button onclick="toggleSheetLive('{{ sheet.id }}', this)" 
+                                                class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all w-[92px]
+                                                {% if sheet.is_live %}bg-green-50 text-green-700 border border-green-200{% else %}bg-gray-100 text-gray-500 border border-gray-200{% endif %}"
+                                                title="{% if sheet.is_live %}Click to disable participation{% else %}Click to enable participation{% endif %}">
+                                                <span class="w-1.5 h-1.5 rounded-full {% if sheet.is_live %}bg-green-500{% else %}bg-gray-400{% endif %}"></span>
+                                                {% if sheet.is_live %}Live{% else %}Off{% endif %}
+                                            </button>
                                         </td>
                                         <td class="px-6 py-4 text-right">
                                             <div class="flex items-center justify-end gap-1 ">
@@ -391,6 +392,9 @@
                                                             (.csv)</a>
                                                     </div>
                                                 </div>
+                                                <button onclick="openEditModal('{{ sheet.id }}', this)"
+                                                    class="p-1.5 rounded-md hover:bg-orange-50 text-gray-400 hover:text-orange-600 transition-colors"
+                                                    title="Edit Schema"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
                                                 <button
                                                     onclick="confirmDeleteSheet('{{ sheet.id }}', '{{ sheet.name|escapejs }}')"
                                                     class="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
@@ -500,10 +504,16 @@
                                 <thead
                                     class="text-xs text-gray-400 font-semibold uppercase tracking-wider border-b border-gray-100 bg-white sticky top-0 z-10">
                                     <tr>
-                                        <th class="px-6 py-4 whitespace-nowrap">Sheet Name</th>
-                                        <th class="px-6 py-4 whitespace-nowrap">Owner</th>
-                                        <th class="px-6 py-4 whitespace-nowrap">Joined Date</th>
-                                        <th class="px-6 py-4 text-right whitespace-nowrap">Actions</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                            Sheet Name</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                            Owner</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                            Joined At</th>
+                                        <th class="px-6 py-4 text-right text-[11px] font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 text-[13px]">
@@ -530,9 +540,12 @@
                                                     class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold border border-gray-200">
                                                     {{ member.sheet.owner.username|slice:":1"|upper }}</div>
                                                 <div class="flex flex-col">
-                                                    <span class="font-semibold text-gray-800">{{                                                         member.sheet.owner.username }}</span>
+                                                    <span class="font-semibold text-gray-800">{{ member.sheet.owner.username }}</span>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="text-[13px] text-gray-600 font-medium">{{ member.joined_at|date:"M d, Y" }}</span>
                                         </td>
                                         <td class="px-6 py-4 text-right flex items-center justify-end gap-2">
                                             {% if member.role == "collaborator" %}
@@ -1472,9 +1485,13 @@
             </td>
             <td class="px-6 py-4 text-muted">${sheet.created_at}</td>
             <td class="px-6 py-4">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live
-                </span>
+                <button onclick="toggleSheetLive('${sheet.id}', this)" 
+                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all w-[92px]
+                    ${sheet.is_live ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}"
+                    title="${sheet.is_live ? 'Click to disable participation' : 'Click to enable participation'}">
+                    <span class="w-1.5 h-1.5 rounded-full ${sheet.is_live ? 'bg-green-500' : 'bg-gray-400'}"></span>
+                    ${sheet.is_live ? 'Live' : 'Off'}
+                </button>
             </td>
             <td class="px-6 py-4 text-muted font-medium">${sheet.response_count}</td>
             <td class="px-6 py-4 text-right">
@@ -1655,6 +1672,33 @@
 
 
     // === DELETE SHEET ===
+    async function toggleSheetLive(sheetId, btn) {
+        try {
+            const response = await fetch(`/sheets/${sheetId}/toggle-live/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCSRFToken() }
+            });
+            const data = await response.json();
+            if (response.ok && data.success) {
+                // Update button UI immediately
+                const isLive = data.is_live;
+                btn.className = `inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all w-[92px] ${
+                    isLive ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
+                }`;
+                btn.title = isLive ? 'Click to disable participation' : 'Click to enable participation';
+                btn.innerHTML = `
+                    <span class="w-1.5 h-1.5 rounded-full ${isLive ? 'bg-green-500' : 'bg-gray-400'}"></span>
+                    ${isLive ? 'Live' : 'Off'}
+                `;
+                showToast(isLive ? 'Sheet is now LIVE' : 'Sheet participation DISABLED', 'success');
+            } else {
+                showToast(data.error || 'Failed to update status', 'error');
+            }
+        } catch (error) {
+            showToast('Sync error', 'error');
+        }
+    }
+
     async function confirmDeleteSheet(sheetId, sheetName) {
         if (!confirm(`Are you sure you want to delete "${sheetName}"? This action cannot be undone.`)) {
             return;
