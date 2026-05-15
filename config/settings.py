@@ -51,6 +51,9 @@ ALLOWED_HOSTS = [
 # 3. Production Security Headers
 #    Automatically enforced when DEBUG=False. Safe to leave in settings.
 # ─────────────────────────────────────────────────────────────────────────────
+# Detect if we are running on Render
+RENDER = os.environ.get("RENDER", "false").lower() == "true"
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -58,6 +61,8 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000           # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    # Required for Render to correctly detect HTTPS
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = "DENY"
@@ -69,6 +74,17 @@ else:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
     SECURE_SSL_REDIRECT = False
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. CSRF / Trusted Origins
+#    Required for Django 4.0+ to allow POST requests from specific domains.
+# ─────────────────────────────────────────────────────────────────────────────
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{h}" for h in ALLOWED_HOSTS if not (h.startswith("localhost") or h.startswith("127.0.0.1"))
+]
+# Always include local origins in trusted list for dev
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS += ["http://localhost:8000", "http://127.0.0.1:8000"]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. Application Definition
