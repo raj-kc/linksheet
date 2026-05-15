@@ -161,9 +161,17 @@ USE_TZ = True
 # ─────────────────────────────────────────────────────────────────────────────
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-# Only include the /static source dir if it actually exists (avoids errors
-# when the directory hasn't been created yet locally).
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
+
+# WhiteNoise storage for compressed, versioned static files
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 9. Auth / Login
@@ -268,7 +276,10 @@ CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
-CELERY_TASK_ALWAYS_EAGER = True
+
+# In production (DEBUG=False), we should default to False if a worker is available.
+# But Render free tier often needs EAGER mode to stay under 512MB RAM.
+CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "True").lower() in ("true", "1", "yes")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 14. Cloudinary (Free Tier — File Upload Storage)

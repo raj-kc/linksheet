@@ -53,38 +53,7 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Presentation Admin Views (Temporary for demo use)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def init_superuser(request):
-    """Temporary admin view to create a superuser for presentation."""
-    if request.GET.get('key') != 'MYSUPERSECRETKEY123':
-        return HttpResponse("Forbidden: Invalid Secret Key.", status=403)
-    
-    user, created = User.objects.get_or_create(username='admin')
-    user.set_password('admin123')
-    user.is_staff = True
-    user.is_superuser = True
-    user.save()
-    
-    return HttpResponse("✅ Superuser 'admin' is ready for presentation! <br>Username: admin <br>Password: admin123")
-
-@login_required
-def clear_all_data_presentation(request):
-    """Triggers the same logic as clear_data command from the browser."""
-    if not request.user.is_superuser:
-        return HttpResponse("Forbidden: Only superusers can purge data.", status=403)
-        
-    ActivityLog.objects.all().delete()
-    SheetSyncEvent.objects.all().delete()
-    Sheet.objects.all().delete()
-    
-    return HttpResponse("✅ All data records purged. Dashboard is clean! <a href='/dashboard/'>Return to Dashboard</a>")
-
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Internal helpers
+# 1. Internal helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _trigger_sheet_sync(sheet_id):

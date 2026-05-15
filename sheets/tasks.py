@@ -8,7 +8,7 @@ Sync pipeline order (important — must match Google Sheets row numbering):
   2. UPDATE  — overwrite existing rows by row number
   3. DELETE  — delete rows (highest first to avoid index drift)
 """
-import re
+from datetime import datetime
 import logging
 
 from celery import shared_task
@@ -56,23 +56,27 @@ def process_sheet_events(self, sheet_id):
     if isinstance(exc, HttpError) and not _is_retriable(exc):
         raise  # stop retrying
 
+    # ATOMIC LOCK PROTECTION:
+    # Use select_for_update inside a transaction to ensure only one worker
+    # processes this sheet at a time. This prevents race conditions.
     try:
-        sheet = Sheet.objects.get(id=sheet_id)
-    except Sheet.DoesNotExist:
-        logger.error("Sheet %s not found — skipping sync.", sheet_id)
+        with transaction.atomic():
+            sheet = Sheet.objects.select_for_update(nowait=True).get(id=sheet_id)
+            
+            # If we got here, we have the lock. Check if it's already syncing
+            # and not stale.
+            is_stale = sheet.is_syncing and (timezone.now() - sheet.updated_at).total_seconds() > 300
+            
+            if sheet.is_syncing and not is_stale:
+                logger.debug("Sheet %s is already syncing — skipping.", sheet_id)
+                return
+
+            sheet.is_syncing = True
+            sheet.save(update_fields=["is_syncing", "updated_at"])
+    except (Sheet.DoesNotExist, transaction.DatabaseError):
+        # DatabaseError happens if select_for_update(nowait=True) fails to get the lock
+        logger.debug("Could not acquire lock for sheet %s — skipping.", sheet_id)
         return
-
-    # STALE LOCK PROTECTION:
-    # If is_syncing is stuck (e.g. OOM killed the previous process), we check
-    # if it hasn't been updated for 5 minutes. If so, we assume the lock is dead.
-    is_stale = sheet.is_syncing and (timezone.now() - sheet.updated_at).total_seconds() > 300
-
-    if sheet.is_syncing and not is_stale:
-        logger.debug("Sheet %s is already syncing — skipping.", sheet_id)
-        return
-
-    sheet.is_syncing = True
-    sheet.save(update_fields=["is_syncing"])
 
     synced_successfully = False
 
@@ -93,38 +97,127 @@ def process_sheet_events(self, sheet_id):
             if not events.exists():
                 break
 
-            # PHASE 1 — CREATE (must run first to establish row numbers)
-            # We process all creates in this batch before moving to updates.
+            # PHASE 1 — CREATE (Batch Optimized)
+            # We group rows by their target tabs to perform fewer append calls.
             create_events = events.filter(action="create")
-            for event in create_events:
-                try:
-                    _handle_create(service, sheet, event)
-                except Exception as exc:
-                    logger.error("Create sync failed for event %s: %s", event.id, exc)
-                    event.error = str(exc)
-                    event.save(update_fields=["error"])
-                # We always mark as processed so we don't infinitely loop
-                event.processed = True
-                event.save(update_fields=["processed"])
+            if create_events.exists():
+                tab_batches = {} # tab_name -> [(event, values)]
+                
+                for event in create_events:
+                    row = event.row
+                    if not row: continue
+                    
+                    target_tabs = _get_target_tabs(sheet, event.payload, first_tab_title=first_tab_title)
+                    if not target_tabs: target_tabs = [first_tab_title]
+                    
+                    row_values = [event.payload.get(col, "") for col in sheet.columns]
+                    
+                    for tab_name in target_tabs:
+                        if tab_name not in tab_batches:
+                            tab_batches[tab_name] = []
+                        tab_batches[tab_name].append((event, row_values))
 
-            # PHASE 2 — UPDATE
-            # MUST refresh row instance in memory because Phase 1 or previous updates
-            # might have shifted row numbers in the DB.
+                for tab_name, entries in tab_batches.items():
+                    try:
+                        _ensure_sheet_tab(service, sheet, tab_name)
+                        values = [e[1] for e in entries]
+                        
+                        response = service.spreadsheets().values().append(
+                            spreadsheetId=sheet.google_sheet_id,
+                            range=f"'{tab_name}'!A1",
+                            valueInputOption="RAW",
+                            insertDataOption="INSERT_ROWS",
+                            body={"values": values}
+                        ).execute()
+
+                        updated_range = response["updates"]["updatedRange"]
+                        match = re.search(r"!A(\d+):", updated_range + ":") # add colon to handle single row range
+                        if match:
+                            start_row = int(match.group(1))
+                            for idx, (event, _) in enumerate(entries):
+                                row = event.row
+                                rmap = row.tab_row_numbers or {}
+                                rmap[tab_name] = start_row + idx
+                                row.tab_row_numbers = rmap
+                                if not row.sheet_row_number:
+                                    row.sheet_row_number = rmap[tab_name]
+                                row.save(update_fields=["tab_row_numbers", "sheet_row_number"])
+                    except Exception as exc:
+                        logger.error("Batch create failed for tab %s: %s", tab_name, exc)
+                        for event, _ in entries:
+                            event.error = str(exc)
+                            event.save(update_fields=["error"])
+                
+                # Mark all as processed
+                create_events.update(processed=True)
+
+            # PHASE 2 — UPDATE (Batch Optimized)
+            # We use spreadsheets.values.batchUpdate to update multiple ranges in one call.
             update_events = events.filter(action="update")
-            for event in update_events:
-                try:
-                    _handle_update(service, sheet, event)
-                except Exception as exc:
-                    logger.error("Update sync failed for event %s: %s", event.id, exc)
-                    event.error = str(exc)
-                    event.save(update_fields=["error"])
-                # We always mark as processed so we don't infinitely loop
-                event.processed = True
-                event.save(update_fields=["processed"])
+            if update_events.exists():
+                batch_data = [] # list of {range, values}
+                processed_events = []
+                
+                num_cols = max(1, len(sheet.columns))
+                end_col = _index_to_col(num_cols - 1)
+
+                for event in update_events:
+                    if event.row:
+                        event.row.refresh_from_db()
+                    row = event.row
+                    if not row or not row.tab_row_numbers: continue
+                    
+                    row_values = [event.payload.get(col, "") for col in sheet.columns]
+                    
+                    # Logic: for simplicity in batching, we only update tabs that didn't change.
+                    # Complex movements (moving between tabs) are still handled individually 
+                    # if needed, but here we try to batch the majority.
+                    current_tabs = _get_target_tabs(sheet, event.payload, first_tab_title=first_tab_title)
+                    if not current_tabs: current_tabs = [first_tab_title]
+                    
+                    old_row_map = row.tab_row_numbers
+                    
+                    # If tabs changed, fallback to individual handle for this specific row
+                    # to manage deletions/appends correctly.
+                    tabs_changed = set(old_row_map.keys()) != set(current_tabs)
+                    if tabs_changed:
+                        try:
+                            _handle_update(service, sheet, event)
+                        except Exception as exc:
+                            event.error = str(exc)
+                            event.save(update_fields=["error"])
+                        processed_events.append(event)
+                        continue
+
+                    for tab_name, num in old_row_map.items():
+                        batch_data.append({
+                            "range": f"'{tab_name}'!A{num}:{end_col}{num}",
+                            "values": [row_values]
+                        })
+                    processed_events.append(event)
+
+                if batch_data:
+                    try:
+                        service.spreadsheets().values().batchUpdate(
+                            spreadsheetId=sheet.google_sheet_id,
+                            body={
+                                "valueInputOption": "RAW",
+                                "data": batch_data
+                            }
+                        ).execute()
+                    except Exception as exc:
+                        logger.error("Batch update failed: %s", exc)
+                        for event in processed_events:
+                            event.error = str(exc)
+                            event.save(update_fields=["error"])
+                
+                for event in processed_events:
+                    event.processed = True
+                    event.save(update_fields=["processed"])
 
             # PHASE 3 — DELETE (highest row numbers first to avoid index drift)
             delete_events = list(
-                events.filter(action="delete").order_by("-row_number")
+                events.filter(action="delete", processed=False).order_by("-row_number")
             )
             for event in delete_events:
                 try:
@@ -468,25 +561,31 @@ def _delete_and_shift(service, sheet, tab_name, row_num):
 
     # COMPLEX: Update row numbers in the DB for THIS tab
     # Find all rows that were in this tab AFTER the deleted row index.
-    rows_to_shift = SheetRow.objects.filter(sheet=sheet)
-    # We must scan all rows because PostgreSQL JSONField doesn't easily filter on values > X
-    # but we can narrow down by checking if the tab exists in their map.
-    # Find rows to shift
+    # OPTIMIZED: Only fetch rows that actually need shifting.
+    # We narrow down the queryset to rows that contain the specific tab_name.
+    rows_to_shift = SheetRow.objects.filter(
+        sheet=sheet, 
+        tab_row_numbers__has_key=tab_name
+    )
+    
     to_update = []
     for r in rows_to_shift:
         rmap = r.tab_row_numbers or {}
-        if tab_name in rmap and rmap[tab_name] > row_num:
-            rmap[tab_name] -= 1
+        val = rmap.get(tab_name)
+        
+        if val is not None and val > row_num:
+            rmap[tab_name] = val - 1
             
             # Maintenance: sync the legacy sheet_row_number if it matched the old tab_row
-            if r.sheet_row_number == (rmap[tab_name] + 1):
+            if r.sheet_row_number == val:
                 r.sheet_row_number -= 1
                 
             r.tab_row_numbers = rmap
             to_update.append(r)
     
     if to_update:
-        SheetRow.objects.bulk_update(to_update, ["tab_row_numbers", "sheet_row_number"])
+        # Use a reasonable batch size for bulk_update to stay under memory limits
+        SheetRow.objects.bulk_update(to_update, ["tab_row_numbers", "sheet_row_number"], batch_size=500)
 
 
 @shared_task(bind=True)
